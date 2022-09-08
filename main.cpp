@@ -8,6 +8,8 @@
 #include <ncine/Sprite.h>
 #include <ncine/TextNode.h>
 #include <ncine/IGfxDevice.h>
+#include <ncine/FileSystem.h>
+#include <ncine/DrawableNode.h>
 
 nctl::UniquePtr<nc::IAppEventHandler> createAppEventHandler()
 {
@@ -30,17 +32,35 @@ void MyEventHandler::onPreInit(nc::AppConfiguration &config)
 
 	config.windowTitle = "ncTemplate";
 	config.windowIconFilename = "icon48.png";
-	//config.windowWidth
+	// Set the resolution
+	config.resolution.set(1000, 800);
 }
 
 
 void MyEventHandler::onInit()
 {
-	// Resize to square-ish, with borders for debug, etc.
-	nc::theApplication().gfxDevice().setResolution(800, 800);
-	//nc::IGfxDevice::WindowMode(550, 550, false, false);
+	const int width = nc::theApplication().widthInt();
+	const int height = nc::theApplication().heightInt();
 
-	return;
+	// Init textures, sprites to be used/reused later
+	boardTexture_ = nctl::makeUnique<nc::Texture>((nc::fs::dataPath() + "goTable.png").data());
+	emptyTexture_ = nctl::makeUnique<nc::Texture>((nc::fs::dataPath() + "/go-stones/e.png").data());
+	gridTexture_ = nctl::makeUnique<nc::Texture>((nc::fs::dataPath() + "/go-stones/grid.png").data());
+	whiteTexture_ = nctl::makeUnique<nc::Texture>((nc::fs::dataPath() + "/go-stones/w.png").data());
+	blackTexture_ = nctl::makeUnique<nc::Texture>((nc::fs::dataPath() + "/go-stones/b.png").data());
+
+	// Stretch the game space to a window size
+	boardSprite_ = nctl::makeUnique<nc::Sprite>(&nc::theApplication().rootNode(), boardTexture_.get());
+	boardSprite_->setSize(height, height);
+	boardSprite_->setPosition(height / 2.0, height / 2.0);
+
+	// Reserved space 200 x 800 for debugging and scoring
+}
+
+void MyEventHandler::onFrameStart()
+{
+	// The update loop
+
 }
 
 
@@ -51,6 +71,6 @@ void MyEventHandler::onMouseButtonPressed(const nc::MouseEvent &event)
 
 void MyEventHandler::onKeyReleased(const nc::KeyboardEvent &event)
 {
-	if (event.sym == nc::KeySym::ESCAPE)
+	if (event.sym == nc::KeySym::ESCAPE || event.sym == nc::KeySym::Q)
 		nc::theApplication().quit();
 }

@@ -6,6 +6,8 @@ set(NCPROJECT_DESCRIPTION "MCTS Go implementation for NAIL122")
 set(NCPROJECT_SOURCES
 	main.h
 	main.cpp
+	SpritePool.h
+	SpritePool.cpp
 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
