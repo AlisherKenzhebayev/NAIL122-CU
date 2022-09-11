@@ -1,4 +1,5 @@
 #include "main.h"
+//#include "mcts.h"
 
 #include <chrono>
 #include <ncine/Application.h>
@@ -10,6 +11,8 @@
 #include <ncine/IGfxDevice.h>
 #include <ncine/FileSystem.h>
 #include <ncine/DrawableNode.h>
+
+const char *FontTextureFile = "DroidSans32_256.png";
 
 nctl::UniquePtr<nc::IAppEventHandler> createAppEventHandler()
 {
@@ -30,7 +33,7 @@ void MyEventHandler::onPreInit(nc::AppConfiguration &config)
 	#endif
 #endif
 
-	config.windowTitle = "ncTemplate";
+	config.windowTitle = "ncPong";
 	config.windowIconFilename = "icon48.png";
 	// Set the resolution
 	config.resolution.set(1000, 800);
@@ -39,8 +42,11 @@ void MyEventHandler::onPreInit(nc::AppConfiguration &config)
 
 void MyEventHandler::onInit()
 {
-	const int width = nc::theApplication().widthInt();
-	const int height = nc::theApplication().heightInt();
+	nc::SceneNode &rootNode = nc::theApplication().rootNode();
+	dummy_ = nctl::makeUnique<nc::SceneNode>(&rootNode);
+
+	font_ = nctl::makeUnique<nc::Font>((nc::fs::dataPath() + "DroidSans32_256.fnt").data(),
+	                                   (nc::fs::dataPath() + FontTextureFile).data());
 
 	// Init textures, sprites to be used/reused later
 	boardTexture_ = nctl::makeUnique<nc::Texture>((nc::fs::dataPath() + "goTable.png").data());
@@ -50,17 +56,33 @@ void MyEventHandler::onInit()
 	blackTexture_ = nctl::makeUnique<nc::Texture>((nc::fs::dataPath() + "/go-stones/b.png").data());
 
 	// Stretch the game space to a window size
-	boardSprite_ = nctl::makeUnique<nc::Sprite>(&nc::theApplication().rootNode(), boardTexture_.get());
-	boardSprite_->setSize(height, height);
-	boardSprite_->setPosition(height / 2.0, height / 2.0);
-
+	boardSprite_ = nctl::makeUnique<nc::Sprite>(dummy_.get(), boardTexture_.get());
+	
 	// Reserved space 200 x 800 for debugging and scoring
+	debugText_ = nctl::makeUnique<nc::TextNode>(dummy_.get(), font_.get());
+	debugText_->setColor(170, 135, 181, 255);
+	debugText_->setScale(0.8f);
+	debugText_->setAlignment(nc::TextNode::Alignment::RIGHT);
+
+	//gameStatus_ = GameStatus(9);
+	//gameStatus_.ResetGame();
 }
 
 void MyEventHandler::onFrameStart()
 {
+	const int width = nc::theApplication().widthInt();
+	const int height = nc::theApplication().heightInt();
+
 	// The update loop
 
+	// Update placement of standard things, like scores, sprites, etc.
+	boardSprite_->setSize(height, height);
+	boardSprite_->setPosition(height / 2.0, height / 2.0);
+
+	screenString_.clear();
+	screenString_.format(static_cast<const char *>("Debug Info HERE\nDebug Info HERE\nDebug Info HERE"));
+	debugText_->setString(screenString_);
+	debugText_->setPosition(nc::theApplication().width() - debugText_->width() * 0.5f, nc::theApplication().height() - debugText_->height() * 0.5f);
 }
 
 

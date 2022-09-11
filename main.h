@@ -1,11 +1,16 @@
 #ifndef CLASS_MYEVENTHANDLER
 #define CLASS_MYEVENTHANDLER
 
+#include "mcts.h"
 #include <ncine/IAppEventHandler.h>
 #include <ncine/IInputEventHandler.h>
 #include <ncine/Sprite.h>
+#include <ncine/SceneNode.h>
+#include <ncine/TextNode.h>
+#include <ncine/Font.h>
 #include <ncine/Texture.h>
 #include <nctl/UniquePtr.h>
+#include <nctl/String.h>
 
 namespace ncine {
 
@@ -21,9 +26,10 @@ class MyEventHandler :
     public nc::IInputEventHandler
 {
   private:
-	//GameState state_;
-	//nctl::String screenString_;
+	//GameStatus gameStatus_;
 	//PlayerMovement playerMovement_;
+
+	nctl::UniquePtr<nc::SceneNode> dummy_;
 
 	// Board draw
 	nctl::UniquePtr<nc::Texture> gridTexture_;
@@ -31,8 +37,16 @@ class MyEventHandler :
 	nctl::UniquePtr<nc::Texture> blackTexture_;
 	nctl::UniquePtr<nc::Texture> emptyTexture_;
 	nctl::UniquePtr<nc::Texture> boardTexture_;
-	
+
+	// Functional Sprites
 	nctl::UniquePtr<nc::Sprite> boardSprite_;
+
+	// Text
+	nctl::String screenString_;
+	nctl::UniquePtr<nc::Font> font_;
+	nctl::UniquePtr<nc::TextNode> debugText_;
+
+	// SpritePools for a grid (board setup) and stones of different colors
 	//nctl::UniquePtr<GridPool> gridPool_;
 	//nctl::UniquePtr<StonePool> stonePool_;
 
