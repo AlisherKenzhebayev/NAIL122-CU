@@ -1,5 +1,5 @@
 #include "main.h"
-//#include "mcts.h"
+#include "mcts.h"
 
 #include <chrono>
 #include <ncine/Application.h>
@@ -35,7 +35,7 @@ void MyEventHandler::onPreInit(nc::AppConfiguration &config)
 
 	config.windowTitle = "ncPong";
 	config.windowIconFilename = "icon48.png";
-	// Set the resolution
+	// Set the window resolution
 	config.resolution.set(1000, 800);
 }
 
@@ -64,8 +64,11 @@ void MyEventHandler::onInit()
 	debugText_->setScale(0.8f);
 	debugText_->setAlignment(nc::TextNode::Alignment::RIGHT);
 
-	//gameStatus_ = GameStatus(9);
-	//gameStatus_.ResetGame();
+	gridPool_ = nctl::makeUnique<GridPool>(9 * 9, blackTexture_.get(), whiteTexture_.get());
+
+	rootState_ = GameState(9);
+	gameStatus_ = GameStatus(rootState_);
+	gameStatus_.ResetGame();
 }
 
 void MyEventHandler::onFrameStart()
@@ -83,11 +86,14 @@ void MyEventHandler::onFrameStart()
 	screenString_.format(static_cast<const char *>("Debug Info HERE\nDebug Info HERE\nDebug Info HERE"));
 	debugText_->setString(screenString_);
 	debugText_->setPosition(nc::theApplication().width() - debugText_->width() * 0.5f, nc::theApplication().height() - debugText_->height() * 0.5f);
+
+	gridPool_->draw();
 }
 
 
 void MyEventHandler::onMouseButtonPressed(const nc::MouseEvent &event)
 {
+	event.x;
 	nc::theApplication().quit();
 }
 

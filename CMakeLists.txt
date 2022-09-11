@@ -10,6 +10,8 @@ set(NCPROJECT_SOURCES
 	SpritePool.cpp
 	mcts.h
 	mcts.cpp
+	GridPool.h
+	GridPool.cpp
 )
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")

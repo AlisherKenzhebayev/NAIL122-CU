@@ -37,69 +37,24 @@ enum class Color
 class GameState
 {
 public:
-
-	GameState() {
-		N = 9;
-		board = vector<Color>(N * N, Color::E);
-		terminal = false;
-		p1Score = 0;
-		p2Score = 0;
-		pTurn = PlayerSide::BLACK;
-	}
-
-	GameState(int n) {
-		N = n;
-		board = vector<Color>(N * N, Color::E);
-		terminal = false;
-		p1Score = 0;
-		p2Score = 0;
-		pTurn = PlayerSide::BLACK;
-	}
-
-	int ConvertToArray(int x, int y) {
-		return x * N + y;
-	}
-
-	Coordinate ConvertToCoordinate(int i) {
-		return Coordinate(i / N, i % N);
-	}
+	GameState();
+	GameState(int n);
+	int ConvertToArray(int x, int y);
+	static Coordinate ConvertToCoordinate(int i, int N_);
+	Color inverseColor(Color c);
+	void PlayStone(Coordinate c, Color stone);
+	void ResetBoard();
 
 	bool IsTerminal() {
-		return terminal;
+		return terminal_;
 	}
 
-	Color inverseColor(Color c) {
-		if (c == Color::B)
-		{
-			return Color::W;
-		}
-		else if (c == Color::W)
-		{
-			return Color::B;
-		}
-		else
-		{
-			return c;
-		}
-	}
-
-	void ResetBoard() {
-		for (int i = 0; i < board.size(); i++) {
-			board[i] = Color::E;
-		}
-	}
-
-	void PlayStone(Coordinate c, Color stone) {
-		//TODO: Add all the rules here, etc.
-		board[ConvertToArray(c.x, c.y)] = stone;
-	}
-
-  private:
-	int N;
-	bool terminal;
-	double p1Score, p2Score;
-	std::vector<Color> board;
-	PlayerSide pTurn;
+private:
+	int N_;
+	bool terminal_;
+	double p1Score_, p2Score_;
+	std::vector<Color> board_;
+	PlayerSide pSide_;
 	//unsigned int numberOfSimulations;
 	//queue<GameMove *> *untriedActions;
 };
@@ -110,50 +65,29 @@ public:
 class GameStatus
 {
   public:
-	GameStatus(int n) {
-		N = n;
-		actionsCount = 0;
-		currentTurn = PlayerSide::BLACK;
-		gameState = GameState(n);
-		finished = false;
-	}
+	GameStatus();
+	GameStatus(GameState state);
+
+	void PlayTurn();
+	void ResetGame();
 
 	PlayerSide CurrentTurn() {
-		return currentTurn;
+		return currentTurn_;
 	}
 
 	GameState CurrentState() {
-		return gameState;
-	}
-
-	void PlayTurn() {
-		if (currentTurn == PlayerSide::BLACK)
-		{
-			currentTurn = PlayerSide::WHITE;
-		}
-		else
-		{
-			currentTurn = PlayerSide::BLACK;
-		}
-	}
-
-	void ResetGame() {
-		actionsCount = 0;
-		currentTurn = PlayerSide::BLACK; // Black side moves first
-		gameState.ResetBoard();
-		finished = false;
+		return gameState_;
 	}
 
 	bool IsFinished() {
-		return finished;
+		return finished_;
 	}
 
   private:
-	int N;
-	int actionsCount;
-	PlayerSide currentTurn;
-	GameState gameState;
-	bool finished;
+	int actionsCount_;
+	PlayerSide currentTurn_;
+	GameState gameState_;
+	bool finished_;
 };
 
 #endif 

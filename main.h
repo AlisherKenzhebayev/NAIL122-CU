@@ -2,6 +2,7 @@
 #define CLASS_MYEVENTHANDLER
 
 #include "mcts.h"
+#include "GridPool.h"
 #include <ncine/IAppEventHandler.h>
 #include <ncine/IInputEventHandler.h>
 #include <ncine/Sprite.h>
@@ -26,7 +27,8 @@ class MyEventHandler :
     public nc::IInputEventHandler
 {
   private:
-	//GameStatus gameStatus_;
+	GameState rootState_;
+	GameStatus gameStatus_;
 	//PlayerMovement playerMovement_;
 
 	nctl::UniquePtr<nc::SceneNode> dummy_;
@@ -47,7 +49,7 @@ class MyEventHandler :
 	nctl::UniquePtr<nc::TextNode> debugText_;
 
 	// SpritePools for a grid (board setup) and stones of different colors
-	//nctl::UniquePtr<GridPool> gridPool_;
+	nctl::UniquePtr<GridPool> gridPool_;
 	//nctl::UniquePtr<StonePool> stonePool_;
 
   public:
