@@ -14,7 +14,7 @@ namespace nc = ncine;
 class GridPool
 {
   public:
-	GridPool(unsigned int maxSize, nc::Texture *gridTexB, nc::Texture *gridTexW);
+	GridPool(unsigned int maxSize, nc::Texture *gridTexE, nc::Texture *gridTexB, nc::Texture *gridTexW, nc::Vector2f offset, nc::Vector2f size);
 
 	void reset();
 	void draw();
@@ -24,13 +24,14 @@ class GridPool
 
   private:
 	unsigned int size_;
-	int height_;
-	int width_;
+	int rows_;
+	int columns_;
 	SpritePool cells_;
+	nc::Vector2f offset_;
 	
-	float xMin_, xMax_;
-	float yMin_, yMax_;
+	float height_, width_;
 
+	nc::Texture *gridTexE_;
 	nc::Texture *gridTexB_;
 	nc::Texture *gridTexW_;
 	

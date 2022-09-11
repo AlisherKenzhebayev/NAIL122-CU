@@ -64,7 +64,7 @@ void MyEventHandler::onInit()
 	debugText_->setScale(0.8f);
 	debugText_->setAlignment(nc::TextNode::Alignment::RIGHT);
 
-	gridPool_ = nctl::makeUnique<GridPool>(9 * 9, blackTexture_.get(), whiteTexture_.get());
+	gridPool_ = nctl::makeUnique<GridPool>(9 * 9, emptyTexture_.get(), blackTexture_.get(), whiteTexture_.get(), nc::Vector2f(0.0f, 0.0f), nc::Vector2f(800.0f, 800.0f));
 
 	rootState_ = GameState(9);
 	gameStatus_ = GameStatus(rootState_);

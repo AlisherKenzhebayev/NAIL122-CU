@@ -6,7 +6,7 @@
 
 SpritePool::SpritePool(unsigned int size, nc::Texture *texture)
     : size_(size), nextFree_(0),
-      width_(texture->width()), height_(texture->height())
+      columns_(texture->width()), rows_(texture->height())
 {
 	ASSERT(size_ > 0);
 

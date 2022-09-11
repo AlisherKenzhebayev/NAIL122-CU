@@ -39,8 +39,8 @@ class SpritePool
 	/// Returns the number of acquired entities
 	inline unsigned int acquiredSize() const { return nextFree_; }
 
-	inline int spriteWidth() const { return width_; }
-	inline int spriteHeight() const { return height_; }
+	inline int spriteWidth() const { return columns_; }
+	inline int spriteHeight() const { return rows_; }
 
   private:
 	unsigned int size_;
@@ -48,8 +48,8 @@ class SpritePool
 	unsigned int nextFree_;
 
 	nctl::Array<nctl::UniquePtr<nc::Sprite>> sprites_;
-	int width_;
-	int height_;
+	int columns_;
+	int rows_;
 
 	SpritePool(const SpritePool &) = delete;
 	SpritePool &operator=(const SpritePool &) = delete;
