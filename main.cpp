@@ -13,6 +13,10 @@
 #include <ncine/DrawableNode.h>
 
 const char *FontTextureFile = "DroidSans32_256.png";
+const float gameWidth_ = 800.0f;
+const float gameHeight_ = 800.0f;
+const int windowWidth_ = 1000;
+const int windowHeight_ = 800;
 
 nctl::UniquePtr<nc::IAppEventHandler> createAppEventHandler()
 {
@@ -36,7 +40,7 @@ void MyEventHandler::onPreInit(nc::AppConfiguration &config)
 	config.windowTitle = "ncPong";
 	config.windowIconFilename = "icon48.png";
 	// Set the window resolution
-	config.resolution.set(1000, 800);
+	config.resolution.set(windowWidth_, windowHeight_);
 }
 
 
@@ -51,9 +55,9 @@ void MyEventHandler::onInit()
 	// Init textures, sprites to be used/reused later
 	boardTexture_ = nctl::makeUnique<nc::Texture>((nc::fs::dataPath() + "goTable.png").data());
 	emptyTexture_ = nctl::makeUnique<nc::Texture>((nc::fs::dataPath() + "/go-stones/e.png").data());
-	gridTexture_ = nctl::makeUnique<nc::Texture>((nc::fs::dataPath() + "/go-stones/grid.png").data());
 	whiteTexture_ = nctl::makeUnique<nc::Texture>((nc::fs::dataPath() + "/go-stones/w.png").data());
 	blackTexture_ = nctl::makeUnique<nc::Texture>((nc::fs::dataPath() + "/go-stones/b.png").data());
+	gridTexture_ = nctl::makeUnique<nc::Texture>((nc::fs::dataPath() + "/go-stones/grid.png").data());
 
 	// Stretch the game space to a window size
 	boardSprite_ = nctl::makeUnique<nc::Sprite>(dummy_.get(), boardTexture_.get());
@@ -64,7 +68,9 @@ void MyEventHandler::onInit()
 	debugText_->setScale(0.8f);
 	debugText_->setAlignment(nc::TextNode::Alignment::RIGHT);
 
-	gridPool_ = nctl::makeUnique<GridPool>(9 * 9, emptyTexture_.get(), blackTexture_.get(), whiteTexture_.get(), nc::Vector2f(0.0f, 0.0f), nc::Vector2f(800.0f, 800.0f));
+	// TODO: Backlog- A bit of a hack with drawing grids, to make writing it a bit faster, needs rewriting?
+	gridPool_ = nctl::makeUnique<GridPool>(9 * 9, gridTexture_.get(), gridTexture_.get(), gridTexture_.get(), nc::Vector2f(0.0f, 0.0f), nc::Vector2f(gameWidth_, gameHeight_));
+	stonePool_ = nctl::makeUnique<GridPool>(9 * 9, emptyTexture_.get(), blackTexture_.get(), whiteTexture_.get(), nc::Vector2f(0.0f, 0.0f), nc::Vector2f(gameWidth_, gameHeight_));
 
 	rootState_ = GameState(9);
 	gameStatus_ = GameStatus(rootState_);
@@ -87,7 +93,9 @@ void MyEventHandler::onFrameStart()
 	debugText_->setString(screenString_);
 	debugText_->setPosition(nc::theApplication().width() - debugText_->width() * 0.5f, nc::theApplication().height() - debugText_->height() * 0.5f);
 
+	// First draw the grid, then the stones using the information given from the game state
 	gridPool_->draw();
+	stonePool_->draw();
 }
 
 

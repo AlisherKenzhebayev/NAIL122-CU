@@ -50,7 +50,7 @@ class MyEventHandler :
 
 	// SpritePools for a grid (board setup) and stones of different colors
 	nctl::UniquePtr<GridPool> gridPool_;
-	//nctl::UniquePtr<StonePool> stonePool_;
+	nctl::UniquePtr<GridPool> stonePool_;
 
   public:
 	void onPreInit(nc::AppConfiguration &config) override;
