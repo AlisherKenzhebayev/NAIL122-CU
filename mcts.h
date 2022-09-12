@@ -45,6 +45,11 @@ public:
 	void PlayStone(Coordinate c, Color stone);
 	void ResetBoard();
 
+	std::vector<Color> GetBoardState()
+	{
+		return board_;
+	}
+
 	bool isActionValid(Coordinate c, PlayerSide side)
 	{
 		//TODO:

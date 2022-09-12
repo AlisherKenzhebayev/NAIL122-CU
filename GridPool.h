@@ -18,8 +18,7 @@ class GridPool
 
 	void reset();
 	void draw();
-//	void draw(nc::Vector2i cTL, nc::Vector2i cDR);
-//	void drawSingle(nc::Vector2i cTL, nc::Vector2i cDR, Coordinate c, Color stone);
+	void drawBoard(std::vector<Color> board);
 	void drawSingle(Coordinate c, Color stone);
 
   private:
@@ -30,6 +29,7 @@ class GridPool
 	nc::Vector2f offset_;
 	
 	float height_, width_;
+	float cellSideVer_, cellSideHor_;
 
 	nc::Texture *gridTexE_;
 	nc::Texture *gridTexB_;

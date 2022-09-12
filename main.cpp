@@ -82,27 +82,33 @@ void MyEventHandler::onInit()
 	gameStatus_.ResetGame();
 }
 
+// The update loop
 void MyEventHandler::onFrameStart()
 {
 	const int width = nc::theApplication().widthInt();
 	const int height = nc::theApplication().heightInt();
-
-	// The update loop
 
 	// Update placement of standard things, like scores, sprites, etc.
 	boardSprite_->setSize(height, height);
 	boardSprite_->setPosition(height / 2.0, height / 2.0);
 
 	screenString_.clear();
-	screenString_.formatAppend(static_cast<const char *>("M_Coord: x-%i y-%i \n"), mCoordWindow_.x, mCoordWindow_.y);
-	Coordinate c = ConvertWinToGamespace(mCoordWindow_);
-	screenString_.formatAppend(static_cast<const char *>("M_Coord: x-%i y-%i \n"), c.x, c.y);
+	screenString_.formatAppend(static_cast<const char *>("Mouse_C: x-%i y-%i \n"), mCoordWindow_.x, mCoordWindow_.y);
+	if (isMoveValidBounds(mCoordWindow_.x, mCoordWindow_.y))
+	{
+		Coordinate c = ConvertWinToGamespace(mCoordWindow_);
+		screenString_.formatAppend(static_cast<const char *>("Board_C: x-%i y-%i \n"), c.x, c.y);
+	}
+	else
+	{
+		screenString_.formatAppend(static_cast<const char *>("Board_C: Out-of-bounds \n"));
+	}
 	debugText_->setString(screenString_);
 	debugText_->setPosition(nc::theApplication().width() - debugText_->width() * 0.5f, nc::theApplication().height() - debugText_->height() * 0.5f);
 
 	// First draw the grid, then the stones using the information given from the game state
 	gridPool_->draw();
-	stonePool_->draw();
+	stonePool_->drawBoard(gameStatus_.CurrentState().GetBoardState());
 }
 
 bool MyEventHandler::isMoveValidBounds(int x, int y) {
@@ -121,8 +127,8 @@ Coordinate MyEventHandler::ConvertWinToGamespace(nc::Vector2i w)
 {
 	Coordinate retVal = Coordinate(0, 0);
 
-	retVal.x = boardWidth * (w.x - gameOffsetH_) / gameWidth_;
-	retVal.y= boardWidth * (w.y - gameOffsetV_) / gameHeight_;
+	retVal.y = boardWidth * (w.x - gameOffsetH_) / gameWidth_;
+	retVal.x = boardWidth - boardWidth * (w.y - gameOffsetV_) / gameHeight_;
 
 	return retVal;
 }
