@@ -27,10 +27,9 @@ class MyEventHandler :
     public nc::IInputEventHandler
 {
   private:
-	GameState rootState_;
-	GameStatus gameStatus_;
-	//PlayerMovement playerMovement_;
-
+	GameState rootState_;			// One and only root node
+	GameStatus gameStatus_;			// Tracks the flow of the game
+	
 	nctl::UniquePtr<nc::SceneNode> dummy_;
 
 	// Board draw
@@ -52,11 +51,16 @@ class MyEventHandler :
 	nctl::UniquePtr<GridPool> gridPool_;
 	nctl::UniquePtr<GridPool> stonePool_;
 
+	nc::Vector2i mCoordWindow_;
+
   public:
+	bool isMoveValidBounds(int x, int y);
+	Coordinate ConvertWinToGamespace(nc::Vector2i w);
+
 	void onPreInit(nc::AppConfiguration &config) override;
 	void onInit() override;
 	void onFrameStart() override;
-
+	void onMouseMoved(const nc::MouseState &state) override;
 	void onKeyReleased(const nc::KeyboardEvent &event) override;
 	void onMouseButtonPressed(const nc::MouseEvent &event) override;
 };

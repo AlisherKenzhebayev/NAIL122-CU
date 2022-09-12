@@ -13,9 +13,12 @@
 #include <ncine/DrawableNode.h>
 
 const char *FontTextureFile = "DroidSans32_256.png";
+const int boardWidth = 9;
 const float gameWidth_ = 800.0f;
 const float gameHeight_ = 800.0f;
-const int windowWidth_ = 1000;
+const int gameOffsetH_ = 0;
+const int gameOffsetV_ = 0;
+const int windowWidth_ = 1200;
 const int windowHeight_ = 800;
 
 nctl::UniquePtr<nc::IAppEventHandler> createAppEventHandler()
@@ -69,10 +72,12 @@ void MyEventHandler::onInit()
 	debugText_->setAlignment(nc::TextNode::Alignment::RIGHT);
 
 	// TODO: Backlog- A bit of a hack with drawing grids, to make writing it a bit faster, needs rewriting?
-	gridPool_ = nctl::makeUnique<GridPool>(9 * 9, gridTexture_.get(), gridTexture_.get(), gridTexture_.get(), nc::Vector2f(0.0f, 0.0f), nc::Vector2f(gameWidth_, gameHeight_));
-	stonePool_ = nctl::makeUnique<GridPool>(9 * 9, emptyTexture_.get(), blackTexture_.get(), whiteTexture_.get(), nc::Vector2f(0.0f, 0.0f), nc::Vector2f(gameWidth_, gameHeight_));
+	gridPool_ = nctl::makeUnique<GridPool>(boardWidth * boardWidth, gridTexture_.get(), gridTexture_.get(), gridTexture_.get(),
+		nc::Vector2f((float)gameOffsetH_, (float)gameOffsetV_), nc::Vector2f(gameWidth_, gameHeight_));
+	stonePool_ = nctl::makeUnique<GridPool>(boardWidth * boardWidth, emptyTexture_.get(), blackTexture_.get(), whiteTexture_.get(),
+		nc::Vector2f((float)gameOffsetH_, (float)gameOffsetV_), nc::Vector2f(gameWidth_, gameHeight_));
 
-	rootState_ = GameState(9);
+	rootState_ = GameState(boardWidth);
 	gameStatus_ = GameStatus(rootState_);
 	gameStatus_.ResetGame();
 }
@@ -89,7 +94,9 @@ void MyEventHandler::onFrameStart()
 	boardSprite_->setPosition(height / 2.0, height / 2.0);
 
 	screenString_.clear();
-	screenString_.format(static_cast<const char *>("Debug Info HERE\nDebug Info HERE\nDebug Info HERE"));
+	screenString_.formatAppend(static_cast<const char *>("M_Coord: x-%i y-%i \n"), mCoordWindow_.x, mCoordWindow_.y);
+	Coordinate c = ConvertWinToGamespace(mCoordWindow_);
+	screenString_.formatAppend(static_cast<const char *>("M_Coord: x-%i y-%i \n"), c.x, c.y);
 	debugText_->setString(screenString_);
 	debugText_->setPosition(nc::theApplication().width() - debugText_->width() * 0.5f, nc::theApplication().height() - debugText_->height() * 0.5f);
 
@@ -98,11 +105,42 @@ void MyEventHandler::onFrameStart()
 	stonePool_->draw();
 }
 
+bool MyEventHandler::isMoveValidBounds(int x, int y) {
+	if (x >= 0 && x <= 800)
+	{
+		if (y >= 0 && y <= 800)
+		{
+			return true;
+		}	
+	}
+
+	return false;
+}
+
+Coordinate MyEventHandler::ConvertWinToGamespace(nc::Vector2i w)
+{
+	Coordinate retVal = Coordinate(0, 0);
+
+	retVal.x = boardWidth * (w.x - gameOffsetH_) / gameWidth_;
+	retVal.y= boardWidth * (w.y - gameOffsetV_) / gameHeight_;
+
+	return retVal;
+}
+
+void MyEventHandler::onMouseMoved(const nc::MouseState &state) {
+	mCoordWindow_ = nc::Vector2i(state.x, state.y);
+}
 
 void MyEventHandler::onMouseButtonPressed(const nc::MouseEvent &event)
 {
-	event.x;
-	nc::theApplication().quit();
+	// Check if it is within the play area for a click
+	if (isMoveValidBounds(mCoordWindow_.x, mCoordWindow_.y)) {
+		// Try applying a move if the move satisfies every other rule
+		Coordinate c = ConvertWinToGamespace(mCoordWindow_);
+		if (gameStatus_.CurrentState().isActionValid(c, gameStatus_.CurrentTurn())) {
+			gameStatus_.PlayTurn(c);
+		}
+	}
 }
 
 void MyEventHandler::onKeyReleased(const nc::KeyboardEvent &event)

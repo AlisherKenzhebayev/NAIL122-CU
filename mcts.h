@@ -45,6 +45,12 @@ public:
 	void PlayStone(Coordinate c, Color stone);
 	void ResetBoard();
 
+	bool isActionValid(Coordinate c, PlayerSide side)
+	{
+		//TODO:
+		return true;
+	}
+
 	bool IsTerminal() {
 		return terminal_;
 	}
@@ -68,7 +74,7 @@ class GameStatus
 	GameStatus();
 	GameStatus(GameState state);
 
-	void PlayTurn();
+	void PlayTurn(Coordinate c);
 	void ResetGame();
 
 	PlayerSide CurrentTurn() {

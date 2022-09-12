@@ -17,17 +17,23 @@ GameStatus::GameStatus(GameState state)
 	finished_ = false;
 }
 
-void GameStatus::PlayTurn()
+void GameStatus::PlayTurn(Coordinate c)
 {
 	if (currentTurn_ == PlayerSide::BLACK)
 	{
+		gameState_.PlayStone(c, Color::B);
 		currentTurn_ = PlayerSide::WHITE;
 	}
 	else
 	{
+		gameState_.PlayStone(c, Color::W);
 		currentTurn_ = PlayerSide::BLACK;
 	}
 }
+
+// TODO: isMoveValid()
+// TODO: isKoRuleApplied()
+// TODO: cleanUpAreasRule()
 
 void GameStatus::ResetGame()
 {
