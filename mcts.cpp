@@ -51,17 +51,21 @@ GameState::GameState()
 	p1Score_ = 0;
 	p2Score_ = 0;
 	pSide_ = PlayerSide::BLACK;
+
+	InitNeighbors(N_);
 }
 
 
 GameState::GameState(int n)
 	: N_(n)
 {
-	board_ = vector<Color>(n * n, Color::E);
+	board_ = vector<Color>(N_ * N_, Color::E);
 	terminal_ = false;
 	p1Score_ = 0;
 	p2Score_ = 0;
 	pSide_ = PlayerSide::BLACK;
+
+	InitNeighbors(N_);
 }
 
 int GameState::ConvertToArray(int x, int y)
@@ -101,5 +105,54 @@ Color GameState::inverseColor(Color c)
 void GameState::PlayStone(Coordinate c, Color stone)
 {
 	//TODO: Add all the rules here, etc.
+	// with checks, generating next section of the board at once
+	// Q: Do I need to recalculate the score of players each generation?
+
+	//TODO: Add suicide rule implementation
+	//TODO: Add ko rule implementation (repeat not allowed)
 	board_[ConvertToArray(c.x, c.y)] = stone;
+}
+
+bool GameState::IsActionValid(Coordinate c, PlayerSide side)
+{
+	//TODO: define what is valid game action (placement of stone)? according to the rules
+	// 1. The players may choose any unoccupied intersection
+	// 2. except for those forbidden by the ko
+	// 3. and suicide rules (see below). 
+
+	if (IsOccupiedCell(c)) {
+		return false;
+	}
+
+	return true;
+}
+
+bool GameState::IsOccupiedCell(Coordinate c)
+{
+	if (board_[ConvertToArray(c.x, c.y)] == Color::E)
+		return false;
+	return true;
+}
+
+bool GameState::IsOnBoard(Coordinate c) {
+	if (c.x % N_ == c.x && c.y % N_ == c.y) {
+		return true;
+	}
+
+	return false;
+}
+
+vector<Coordinate> GameState::GetValidNeighbors(Coordinate c) {
+	vector<Coordinate> retVal;
+	int x = c.x;
+	int y = c.y;
+
+	Coordinate arrayC[4] = { Coordinate(x + 1, y), Coordinate(x - 1, y), Coordinate(x, y + 1), Coordinate(x, y - 1) };
+	for (int i = 0; i < 4; i++) {
+		if (IsOnBoard(arrayC[i])) {
+			retVal.push_back(arrayC[i]);
+		}
+	}
+
+	return retVal;
 }

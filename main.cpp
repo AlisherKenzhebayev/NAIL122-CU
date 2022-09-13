@@ -77,8 +77,7 @@ void MyEventHandler::onInit()
 	stonePool_ = nctl::makeUnique<GridPool>(boardWidth * boardWidth, emptyTexture_.get(), blackTexture_.get(), whiteTexture_.get(),
 		nc::Vector2f((float)gameOffsetH_, (float)gameOffsetV_), nc::Vector2f(gameWidth_, gameHeight_));
 
-	rootState_ = GameState(boardWidth);
-	gameStatus_ = GameStatus(rootState_);
+	gameStatus_ = GameStatus(9);
 	gameStatus_.ResetGame();
 }
 
@@ -143,7 +142,7 @@ void MyEventHandler::onMouseButtonPressed(const nc::MouseEvent &event)
 	if (isMoveValidBounds(mCoordWindow_.x, mCoordWindow_.y)) {
 		// Try applying a move if the move satisfies every other rule
 		Coordinate c = ConvertWinToGamespace(mCoordWindow_);
-		if (gameStatus_.CurrentState().isActionValid(c, gameStatus_.CurrentTurn())) {
+		if (gameStatus_.CurrentState().IsActionValid(c, gameStatus_.CurrentTurn())) {
 			gameStatus_.PlayTurn(c);
 		}
 	}

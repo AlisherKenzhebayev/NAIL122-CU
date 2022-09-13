@@ -46,8 +46,6 @@ void GridPool::reset()
 		cells_[i].setEnabled(false);
 }
 
-// TODO: Add game draw method that takes in the game state, so that I dont draw blindly
-
 void GridPool::draw()
 {
 	for (unsigned int i = 0; i < cells_.acquiredSize(); i++)

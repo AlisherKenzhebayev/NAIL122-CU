@@ -44,16 +44,14 @@ public:
 	Color inverseColor(Color c);
 	void PlayStone(Coordinate c, Color stone);
 	void ResetBoard();
+	bool IsActionValid(Coordinate c, PlayerSide side);
+	bool IsOccupiedCell(Coordinate c);
+	bool IsOnBoard(Coordinate c);
+	vector<Coordinate> GetValidNeighbors(Coordinate c);
 
 	std::vector<Color> GetBoardState()
 	{
 		return board_;
-	}
-
-	bool isActionValid(Coordinate c, PlayerSide side)
-	{
-		//TODO:
-		return true;
 	}
 
 	bool IsTerminal() {
@@ -64,8 +62,19 @@ private:
 	int N_;
 	bool terminal_;
 	double p1Score_, p2Score_;
-	std::vector<Color> board_;
+	vector<Color> board_;
 	PlayerSide pSide_;
+	vector<vector<Coordinate>> neighbors_;
+
+	void InitNeighbors(int n)
+	{
+		for (int i = 0; i < N_ * N_; i++)
+		{
+			neighbors_.push_back(GetValidNeighbors(ConvertToCoordinate(i, N_)));
+		}
+		return;
+	}
+
 	//unsigned int numberOfSimulations;
 	//queue<GameMove *> *untriedActions;
 };

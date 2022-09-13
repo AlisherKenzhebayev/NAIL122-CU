@@ -27,7 +27,6 @@ class MyEventHandler :
     public nc::IInputEventHandler
 {
   private:
-	GameState rootState_;			// One and only root node
 	GameStatus gameStatus_;			// Tracks the flow of the game
 	
 	nctl::UniquePtr<nc::SceneNode> dummy_;
