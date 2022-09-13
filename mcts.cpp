@@ -19,19 +19,40 @@ GameStatus::GameStatus(GameState state)
 
 void GameStatus::PlayTurn(Coordinate c)
 {
+	// TODO: This here needs abstraction through a game model simulation
+
+	// Copy the game state
+	GameState copyState = gameState_;
+
+	// Play the stone
+	copyState.PlayStone(c, currentTurn_);
+
+	// Check for a Ko situation occuring
+	Coordinate potentialKo = copyState.IsThisKo(c, currentTurn_);
+	if (copyState.IsOnBoard(potentialKo))
+	{
+		// Ko has occured
+		// TODO: rewrite in another way
+		copyState.lastKo_ = potentialKo;
+	}
+
+	// Remove new captures from the 
+	// TODO: captures
+
+	// Get the state back to the AI node
+	gameState_ = copyState;
+
+	// Switch
 	if (currentTurn_ == PlayerSide::BLACK)
 	{
-		gameState_.PlayStone(c, Color::B);
 		currentTurn_ = PlayerSide::WHITE;
 	}
 	else
 	{
-		gameState_.PlayStone(c, Color::W);
 		currentTurn_ = PlayerSide::BLACK;
-	}
+	}	
 }
 
-// TODO: isMoveValid()
 // TODO: isKoRuleApplied()
 // TODO: cleanUpAreasRule()
 
@@ -44,20 +65,13 @@ void GameStatus::ResetGame()
 }
 
 GameState::GameState()
+    : GameState(9, Coordinate(-1,-1))
 {
-	N_ = 9;
-	board_ = vector<Color>(N_ * N_, Color::E);
-	terminal_ = false;
-	p1Score_ = 0;
-	p2Score_ = 0;
-	pSide_ = PlayerSide::BLACK;
-
-	InitNeighbors(N_);
 }
 
 
-GameState::GameState(int n)
-	: N_(n)
+GameState::GameState(int n, Coordinate ko)
+    : N_(n), lastKo_(ko)
 {
 	board_ = vector<Color>(N_ * N_, Color::E);
 	terminal_ = false;
@@ -102,29 +116,81 @@ Color GameState::inverseColor(Color c)
 	}
 }
 
-void GameState::PlayStone(Coordinate c, Color stone)
+void GameState::PlayStone(Coordinate c, PlayerSide side)
 {
-	//TODO: Add all the rules here, etc.
+	GameState retVal;
+
+	//TODO: WRONG! - This needs to be in simulation code. The rule itself are in a separate methods
+	// Add all the rules here, etc.
 	// with checks, generating next section of the board at once
 	// Q: Do I need to recalculate the score of players each generation?
-
 	//TODO: Add suicide rule implementation
 	//TODO: Add ko rule implementation (repeat not allowed)
-	board_[ConvertToArray(c.x, c.y)] = stone;
+
+	if (side == PlayerSide::BLACK)
+		board_[ConvertToArray(c.x, c.y)] = Color::B;
+	else 
+		board_[ConvertToArray(c.x, c.y)] = Color::W;
 }
 
+/// <summary>
+/// Given the current state, will this move be considered legal?
+/// </summary>
 bool GameState::IsActionValid(Coordinate c, PlayerSide side)
 {
 	//TODO: define what is valid game action (placement of stone)? according to the rules
 	// 1. The players may choose any unoccupied intersection
+	// 3. except for those forbidden by the suicide rules (see below). 
 	// 2. except for those forbidden by the ko
-	// 3. and suicide rules (see below). 
 
 	if (IsOccupiedCell(c)) {
 		return false;
 	}
 
+	if (IsKoRepeated(c)) {
+		return false;
+	}
+
+	if (IsSuicide(c, side)) {
+		return false;
+	}
+
 	return true;
+}
+
+/// <summary>
+/// Given the state, with a simulation of stone removal, determines if the placement will result in a removal of this particular placement right afterwards 
+/// </summary>
+/// <param name="c"></param>
+/// <returns></returns>
+bool GameState::IsSuicide(Coordinate c, PlayerSide side) {
+	GameState copyState = *this;
+	// 1. Play the stone
+	copyState.PlayStone(c, side);
+	// 2. Remove the stones
+	// 3. Check if the cell c is empty
+
+	// TODO: implement suicide checks
+	return false;
+}
+
+/// <summary>
+/// Given the state and a new stone placement, will this result in a capture of only ONE stone
+/// </summary>
+/// <returns> Coordinate (-1, -1) if not </returns>
+Coordinate GameState::IsThisKo(Coordinate c, PlayerSide side) {
+	//TODO: implement correctly
+	return Coordinate(-1, -1);
+}	
+
+/// <summary>
+/// Only checks if the move is a repeat of a previously existing Ko
+/// </summary>
+bool GameState::IsKoRepeated(Coordinate c)
+{
+	if (lastKo_ == c)
+		return true;
+	return false;
 }
 
 bool GameState::IsOccupiedCell(Coordinate c)
@@ -154,5 +220,34 @@ vector<Coordinate> GameState::GetValidNeighbors(Coordinate c) {
 		}
 	}
 
+	return retVal;
+}
+
+// Finds the connected chain for the coordinate of one of its stones
+ChainReached GameState::FindFloodFill(Coordinate c) {
+	ChainReached retVal;
+	Color color = board_[ConvertToArray(c.x, c.y)];
+	retVal.Chain.insert(c);
+	queue<Coordinate> frontier;
+	frontier.push(c);
+	while (!frontier.empty())
+	{
+		Coordinate currentC = frontier.front();
+		frontier.pop();
+
+		retVal.Chain.insert(currentC);
+		vector<Coordinate> neighbors = neighbors_[ConvertToArray(currentC.x, currentC.y)];
+		for (auto i = 0; i <= neighbors.size(); i++)
+		{
+			if (board_[ConvertToArray(neighbors[i].x, neighbors[i].y)] == color && retVal.Chain.find(neighbors[i]) != retVal.Chain.end())
+			{
+				frontier.push(neighbors[i]);
+			}
+			else if (board_[ConvertToArray(neighbors[i].x, neighbors[i].y)] != color)
+			{
+				retVal.Reached.insert(neighbors[i]);
+			}
+		}
+	}
 	return retVal;
 }

@@ -13,7 +13,7 @@
 #include <ncine/DrawableNode.h>
 
 const char *FontTextureFile = "DroidSans32_256.png";
-const int boardWidth = 9;
+const int boardWidth_ = 9;
 const float gameWidth_ = 800.0f;
 const float gameHeight_ = 800.0f;
 const int gameOffsetH_ = 0;
@@ -72,12 +72,13 @@ void MyEventHandler::onInit()
 	debugText_->setAlignment(nc::TextNode::Alignment::RIGHT);
 
 	// TODO: Backlog- A bit of a hack with drawing grids, to make writing it a bit faster, needs rewriting?
-	gridPool_ = nctl::makeUnique<GridPool>(boardWidth * boardWidth, gridTexture_.get(), gridTexture_.get(), gridTexture_.get(),
+	gridPool_ = nctl::makeUnique<GridPool>(boardWidth_ * boardWidth_, gridTexture_.get(), gridTexture_.get(), gridTexture_.get(),
 		nc::Vector2f((float)gameOffsetH_, (float)gameOffsetV_), nc::Vector2f(gameWidth_, gameHeight_));
-	stonePool_ = nctl::makeUnique<GridPool>(boardWidth * boardWidth, emptyTexture_.get(), blackTexture_.get(), whiteTexture_.get(),
+	stonePool_ = nctl::makeUnique<GridPool>(boardWidth_ * boardWidth_, emptyTexture_.get(), blackTexture_.get(), whiteTexture_.get(),
 		nc::Vector2f((float)gameOffsetH_, (float)gameOffsetV_), nc::Vector2f(gameWidth_, gameHeight_));
 
-	gameStatus_ = GameStatus(9);
+	gameState_ = GameState(boardWidth_, Coordinate(-1, -1));
+	gameStatus_ = GameStatus(gameState_);
 	gameStatus_.ResetGame();
 }
 
@@ -126,8 +127,8 @@ Coordinate MyEventHandler::ConvertWinToGamespace(nc::Vector2i w)
 {
 	Coordinate retVal = Coordinate(0, 0);
 
-	retVal.y = boardWidth * (w.x - gameOffsetH_) / gameWidth_;
-	retVal.x = boardWidth - boardWidth * (w.y - gameOffsetV_) / gameHeight_;
+	retVal.y = boardWidth_ * (w.x - gameOffsetH_) / gameWidth_;
+	retVal.x = boardWidth_ - boardWidth_ * (w.y - gameOffsetV_) / gameHeight_;
 
 	return retVal;
 }
