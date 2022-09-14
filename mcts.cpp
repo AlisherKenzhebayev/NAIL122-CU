@@ -36,8 +36,9 @@ void GameStatus::PlayTurn(Coordinate c)
 		copyState.lastKo_ = potentialKo;
 	}
 
-	// Remove new captures from the 
+	// Remove new captures from the board, including suicides
 	// TODO: captures
+	copyState.ProcessNeighborStones(c, currentTurn_);
 
 	// Get the state back to the AI node
 	gameState_ = copyState;
@@ -116,6 +117,75 @@ Color GameState::inverseColor(Color c)
 	}
 }
 
+set<Coordinate> GameState::TryCaptureStones(Coordinate c) {
+	set<Coordinate> retVal;
+
+	ChainReached chain = FindFloodFill(c);
+	bool isCaptured = true;
+
+	for (auto i = chain.Reached.begin(); i != chain.Reached.end(); i++) {
+		if (board_[ConvertToArray((*i).x, (*i).y)] == Color::E)
+		{
+			isCaptured = false;
+		}
+	}
+
+	if (isCaptured) {
+		PlaceSetStones(Color::E, chain.Chain);
+	}
+
+	return retVal;
+}
+
+void GameState::PlaceSetStones(Color col, set<Coordinate> chain) {
+	for (auto i = chain.begin(); i != chain.end(); i++)
+	{
+		board_[ConvertToArray((*i).x, (*i).y)] = col;
+	}
+
+	return;
+}
+
+/// <summary>
+/// Given a state and a "latest move" coordinate with a context of side, process all chains/stones nearby
+/// </summary>
+void GameState::ProcessNeighborStones(Coordinate c, PlayerSide side) {
+	GameState copyState = *this;
+
+	Color opponentColor = side == PlayerSide::BLACK ? Color::W : Color::B;
+	vector<Coordinate> oppStones;
+	vector<Coordinate> myStones;
+	vector<Coordinate> neighbors = neighbors_[ConvertToArray(c.x, c.y)];
+	for (int i = 0; i < neighbors.size(); i++) {
+		if (copyState.board_[ConvertToArray(neighbors[i].x, neighbors[i].y)] == opponentColor)
+		{
+			oppStones.push_back(neighbors[i]);
+		}
+		else if (copyState.board_[ConvertToArray(neighbors[i].x, neighbors[i].y)] != Color::E)
+		{
+			myStones.push_back(neighbors[i]);
+		}
+	}
+
+	int opCaptured = 0;
+
+	for (int i = 0; i < oppStones.size(); i++)
+	{
+		set<Coordinate> captures = copyState.TryCaptureStones(oppStones[i]);
+		opCaptured += captures.size();
+	}
+
+	// Check self-capture/suicide
+
+	if (copyState.CheckSuicideCapture(c)) {
+		// Even though this SHOULD NOT happen,
+		// The CHECK! confirmed, so we remove the stone
+		copyState.board_[ConvertToArray(c.x, c.y)] = Color::E;
+	}
+
+	*this = copyState;
+}
+
 void GameState::PlayStone(Coordinate c, PlayerSide side)
 {
 	GameState retVal;
@@ -168,6 +238,7 @@ bool GameState::IsSuicide(Coordinate c, PlayerSide side) {
 	// 1. Play the stone
 	copyState.PlayStone(c, side);
 	// 2. Remove the stones
+	copyState.ProcessNeighborStones(c, side);
 	// 3. Check if the cell c is empty
 
 	// TODO: implement suicide checks
@@ -201,7 +272,9 @@ bool GameState::IsOccupiedCell(Coordinate c)
 }
 
 bool GameState::IsOnBoard(Coordinate c) {
-	if (c.x % N_ == c.x && c.y % N_ == c.y) {
+	if (c.y >= 0 && c.x >= 0 &&
+		c.x % N_ == c.x && c.y % N_ == c.y)
+	{
 		return true;
 	}
 
@@ -237,9 +310,9 @@ ChainReached GameState::FindFloodFill(Coordinate c) {
 
 		retVal.Chain.insert(currentC);
 		vector<Coordinate> neighbors = neighbors_[ConvertToArray(currentC.x, currentC.y)];
-		for (auto i = 0; i <= neighbors.size(); i++)
+		for (auto i = 0; i < neighbors.size(); i++)
 		{
-			if (board_[ConvertToArray(neighbors[i].x, neighbors[i].y)] == color && retVal.Chain.find(neighbors[i]) != retVal.Chain.end())
+			if (board_[ConvertToArray(neighbors[i].x, neighbors[i].y)] == color && retVal.Chain.find(neighbors[i]) == retVal.Chain.end())
 			{
 				frontier.push(neighbors[i]);
 			}

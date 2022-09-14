@@ -82,6 +82,9 @@ public:
 	bool IsOnBoard(Coordinate c);
 	ChainReached FindFloodFill(Coordinate c);
 	vector<Coordinate> GetValidNeighbors(Coordinate c);
+	void ProcessNeighborStones(Coordinate c, PlayerSide side);
+	set<Coordinate> TryCaptureStones(Coordinate c);
+	void PlaceSetStones(Color col, set<Coordinate> chain);
 
 	std::vector<Color> GetBoardState()
 	{
