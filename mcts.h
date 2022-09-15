@@ -85,6 +85,7 @@ public:
 	void ProcessNeighborStones(Coordinate c, PlayerSide side);
 	set<Coordinate> TryCaptureStones(Coordinate c);
 	void PlaceSetStones(Color col, set<Coordinate> chain);
+	bool SuicideCapture(Coordinate c);
 
 	std::vector<Color> GetBoardState()
 	{
@@ -104,7 +105,6 @@ public:
 		terminal_ = copy.terminal_;
 		p1Score_ = copy.p1Score_;
 		p2Score_ = copy.p2Score_;
-		pSide_ = copy.pSide_;
 
 		// Ensuring a copy, not a reference
 		board_ = vector<Color>();
@@ -146,10 +146,9 @@ public:
   private:
 	int N_;
 	bool terminal_;
-	double p1Score_, p2Score_;
+	double p1Score_, p2Score_;				// Used to track the number of captured stones. P1 = Black, P2 = Whites
 	vector<Color> board_;
-	PlayerSide pSide_;
-	vector<vector<Coordinate>> neighbors_; // Responsible for caching the neighbors operation only.
+	vector<vector<Coordinate>> neighbors_;	// Responsible for caching the neighbors operation only.
 
 	void InitNeighbors(int n)
 	{

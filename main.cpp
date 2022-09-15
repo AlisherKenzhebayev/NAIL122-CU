@@ -103,6 +103,7 @@ void MyEventHandler::onFrameStart()
 	{
 		screenString_.formatAppend(static_cast<const char *>("Board_C: Out-of-bounds \n"));
 	}
+	screenString_.formatAppend(static_cast<const char *>("Cur_Turn: %s \n", gameStatus_.CurrentTurn() == PlayerSide::BLACK ? "Black" : "White"));
 	debugText_->setString(screenString_);
 	debugText_->setPosition(nc::theApplication().width() - debugText_->width() * 0.5f, nc::theApplication().height() - debugText_->height() * 0.5f);
 

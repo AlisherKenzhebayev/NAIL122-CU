@@ -32,7 +32,7 @@ void GameStatus::PlayTurn(Coordinate c)
 	if (copyState.IsOnBoard(potentialKo))
 	{
 		// Ko has occured
-		// TODO: rewrite in another way
+		// Backlog - TODO: rewrite in another way
 		copyState.lastKo_ = potentialKo;
 	}
 
@@ -53,9 +53,6 @@ void GameStatus::PlayTurn(Coordinate c)
 		currentTurn_ = PlayerSide::BLACK;
 	}	
 }
-
-// TODO: isKoRuleApplied()
-// TODO: cleanUpAreasRule()
 
 void GameStatus::ResetGame()
 {
@@ -78,7 +75,6 @@ GameState::GameState(int n, Coordinate ko)
 	terminal_ = false;
 	p1Score_ = 0;
 	p2Score_ = 0;
-	pSide_ = PlayerSide::BLACK;
 
 	InitNeighbors(N_);
 }
@@ -148,9 +144,12 @@ void GameState::PlaceSetStones(Color col, set<Coordinate> chain) {
 
 /// <summary>
 /// Given a state and a "latest move" coordinate with a context of side, process all chains/stones nearby
+/// This operation also includes the removal of the suicide.
 /// </summary>
 void GameState::ProcessNeighborStones(Coordinate c, PlayerSide side) {
 	GameState copyState = *this;
+
+	// TODO: Add immediate ko check
 
 	Color opponentColor = side == PlayerSide::BLACK ? Color::W : Color::B;
 	vector<Coordinate> oppStones;
@@ -176,16 +175,28 @@ void GameState::ProcessNeighborStones(Coordinate c, PlayerSide side) {
 	}
 
 	// Check self-capture/suicide
+	copyState.SuicideCapture(c);
 
-	if (copyState.CheckSuicideCapture(c)) {
-		// Even though this SHOULD NOT happen,
-		// The CHECK! confirmed, so we remove the stone
-		copyState.board_[ConvertToArray(c.x, c.y)] = Color::E;
-	}
+	// TODO: immediate Ko checks
 
 	*this = copyState;
 }
 
+/// <summary>
+/// Assumes the current position of the board with a coordinate c to be already in action when evaluating. Only checks and resolves self-capture
+/// </summary>
+bool GameState::SuicideCapture(Coordinate c) {
+	set<Coordinate> captures = TryCaptureStones(c);
+	if (captures.size() != 0) {
+		return true;
+	}
+
+	return false;
+}
+
+/// <summary>
+/// Only plays the stone on the current state's board
+/// </summary>
 void GameState::PlayStone(Coordinate c, PlayerSide side)
 {
 	GameState retVal;
@@ -237,11 +248,14 @@ bool GameState::IsSuicide(Coordinate c, PlayerSide side) {
 	GameState copyState = *this;
 	// 1. Play the stone
 	copyState.PlayStone(c, side);
-	// 2. Remove the stones
+	// 2. Remove the stones, suicide including
 	copyState.ProcessNeighborStones(c, side);
-	// 3. Check if the cell c is empty
+	// 3. Check if the cell c is empty after the stones processing
 
-	// TODO: implement suicide checks
+	if (copyState.board_[ConvertToArray(c.x, c.y)] == Color::E) {
+		return true;
+	}
+
 	return false;
 }
 
