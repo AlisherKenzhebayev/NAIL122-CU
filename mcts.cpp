@@ -27,17 +27,7 @@ void GameStatus::PlayTurn(Coordinate c)
 	// Play the stone
 	copyState.PlayStone(c, currentTurn_);
 
-	// Check for a Ko situation occuring
-	Coordinate potentialKo = copyState.IsThisKo(c, currentTurn_);
-	if (copyState.IsOnBoard(potentialKo))
-	{
-		// Ko has occured
-		// Backlog - TODO: rewrite in another way
-		copyState.lastKo_ = potentialKo;
-	}
-
 	// Remove new captures from the board, including suicides
-	// TODO: captures
 	copyState.ProcessNeighborStones(c, currentTurn_);
 
 	// Get the state back to the AI node
@@ -73,8 +63,8 @@ GameState::GameState(int n, Coordinate ko)
 {
 	board_ = vector<Color>(N_ * N_, Color::E);
 	terminal_ = false;
-	p1Score_ = 0;
-	p2Score_ = 0;
+	p1Captures_ = 0;
+	p2Captures_ = 0;
 
 	InitNeighbors(N_);
 }
@@ -113,6 +103,12 @@ Color GameState::inverseColor(Color c)
 	}
 }
 
+bool GameState::CheckForTerminalStart() {
+	//TODO: implement here a check for a boolean, to see if the state is allowed to move onto "terminal pass" moves
+
+	return false;
+}
+
 set<Coordinate> GameState::TryCaptureStones(Coordinate c) {
 	set<Coordinate> retVal;
 
@@ -128,6 +124,7 @@ set<Coordinate> GameState::TryCaptureStones(Coordinate c) {
 
 	if (isCaptured) {
 		PlaceSetStones(Color::E, chain.Chain);
+		retVal = chain.Chain;
 	}
 
 	return retVal;
@@ -149,8 +146,6 @@ void GameState::PlaceSetStones(Color col, set<Coordinate> chain) {
 void GameState::ProcessNeighborStones(Coordinate c, PlayerSide side) {
 	GameState copyState = *this;
 
-	// TODO: Add immediate ko check
-
 	Color opponentColor = side == PlayerSide::BLACK ? Color::W : Color::B;
 	vector<Coordinate> oppStones;
 	vector<Coordinate> myStones;
@@ -167,17 +162,34 @@ void GameState::ProcessNeighborStones(Coordinate c, PlayerSide side) {
 	}
 
 	int opCaptured = 0;
+	vector<Coordinate> koCandidates;
 
 	for (int i = 0; i < oppStones.size(); i++)
 	{
 		set<Coordinate> captures = copyState.TryCaptureStones(oppStones[i]);
 		opCaptured += captures.size();
+
+		if (captures.size() == 1) {
+			koCandidates.push_back(*captures.begin());
+		}
 	}
 
 	// Check self-capture/suicide
 	copyState.SuicideCapture(c);
 
-	// TODO: immediate Ko checks
+	// Check for a Ko situation occuring
+	copyState.lastKo_ = Coordinate(-1, -1);
+	if (opCaptured == 1)
+	{
+		Coordinate potentialKo = this->IsThisKoCandidate(c, koCandidates, side);
+		// TODO: immediate Ko checks
+		if (copyState.IsOnBoard(potentialKo))
+		{
+			// Ko coordinate is a valid one
+			// Backlog - TODO: rewrite in another way
+			copyState.lastKo_ = potentialKo;
+		}
+	}
 
 	*this = copyState;
 }
@@ -260,11 +272,36 @@ bool GameState::IsSuicide(Coordinate c, PlayerSide side) {
 }
 
 /// <summary>
-/// Given the state and a new stone placement, will this result in a capture of only ONE stone
+/// Given the state, new stone placement, guaranteed single capture, will this result in a capture of a ONE stone from all similarly colored in that "eye"
 /// </summary>
 /// <returns> Coordinate (-1, -1) if not </returns>
-Coordinate GameState::IsThisKo(Coordinate c, PlayerSide side) {
-	//TODO: implement correctly
+Coordinate GameState::IsThisKoCandidate(Coordinate c, vector<Coordinate> candidates, PlayerSide side)
+{
+	GameState copyState = *this;
+	int colors[(int)Color::Size_] = {0};
+
+	vector<Coordinate> neighbors = copyState.neighbors_[ConvertToArray(c.x, c.y)];
+	for (auto i = 0; i < neighbors.size(); i++)
+	{
+		// Record the colors count
+		Color cell = copyState.board_[ConvertToArray(neighbors[i].x, neighbors[i].y)];
+		colors[(int)cell]++;
+	}
+
+	int differentColors = 0;
+	for (auto i = 0; i < (int)Color::Size_; i++) {
+		if (colors[i] > 0) {
+			differentColors++;
+		}
+	}
+
+	// If the N of surrounding the "eye" colors == 1
+	if (differentColors == 1) {
+		// We have a Ko member
+		return candidates[0];
+	}
+
+	// Otherwise
 	return Coordinate(-1, -1);
 }	
 

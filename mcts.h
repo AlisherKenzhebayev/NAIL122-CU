@@ -47,7 +47,7 @@ class Coordinate
 enum class PlayerSide
 {
 	BLACK = 0,
-	WHITE = 1
+	WHITE = 1,
 };
 
 enum class Color
@@ -55,6 +55,7 @@ enum class Color
 	E = 0,
 	W = 1,
 	B = 2,
+	Size_ = 3,
 };
 
 struct ChainReached
@@ -78,7 +79,7 @@ public:
 	bool IsOccupiedCell(Coordinate c);
 	bool IsKoRepeated(Coordinate c);
 	bool IsSuicide(Coordinate c, PlayerSide side);
-	Coordinate IsThisKo(Coordinate c, PlayerSide side);
+	Coordinate IsThisKoCandidate(Coordinate c, vector<Coordinate> candidates, PlayerSide side);
 	bool IsOnBoard(Coordinate c);
 	ChainReached FindFloodFill(Coordinate c);
 	vector<Coordinate> GetValidNeighbors(Coordinate c);
@@ -86,6 +87,11 @@ public:
 	set<Coordinate> TryCaptureStones(Coordinate c);
 	void PlaceSetStones(Color col, set<Coordinate> chain);
 	bool SuicideCapture(Coordinate c);
+	bool CheckForTerminalStart();	// Used in MCTS to define "early stopping" conditions + enables skipping in MCTS
+
+	pair<int, int> GetPlayerCaptureScores() {
+		return pair<int, int>(p1Captures_, p2Captures_);
+	}
 
 	std::vector<Color> GetBoardState()
 	{
@@ -98,13 +104,17 @@ public:
 		return terminal_;
 	}
 
+	void GameTerminalStage(bool set)
+	{
+		terminal_ = set;
+	}
 	
 	GameState &operator=(GameState const &copy)
 	{
 		N_ = copy.N_;
 		terminal_ = copy.terminal_;
-		p1Score_ = copy.p1Score_;
-		p2Score_ = copy.p2Score_;
+		p1Captures_ = copy.p1Captures_;
+		p2Captures_ = copy.p2Captures_;
 
 		// Ensuring a copy, not a reference
 		board_ = vector<Color>();
@@ -146,7 +156,7 @@ public:
   private:
 	int N_;
 	bool terminal_;
-	double p1Score_, p2Score_;				// Used to track the number of captured stones. P1 = Black, P2 = Whites
+	int p1Captures_, p2Captures_;				// Used to track the number of captured stones. P1 = Black, P2 = Whites
 	vector<Color> board_;
 	vector<vector<Coordinate>> neighbors_;	// Responsible for caching the neighbors operation only.
 

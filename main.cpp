@@ -103,7 +103,11 @@ void MyEventHandler::onFrameStart()
 	{
 		screenString_.formatAppend(static_cast<const char *>("Board_C: Out-of-bounds \n"));
 	}
-	screenString_.formatAppend(static_cast<const char *>("Cur_Turn: %s \n", gameStatus_.CurrentTurn() == PlayerSide::BLACK ? "Black" : "White"));
+	screenString_.formatAppend(static_cast<const char *>("Cur_Turn: %s \n"), gameStatus_.CurrentTurn() == PlayerSide::BLACK ? "Black" : "White");
+	screenString_.formatAppend(static_cast<const char *>("Current_held_KO | (%i, %i) \n"), gameStatus_.CurrentState().lastKo_.x, gameStatus_.CurrentState().lastKo_.y);
+	auto scores = gameStatus_.CurrentState().GetPlayerCaptureScores();
+	screenString_.formatAppend(static_cast<const char *>("Captures | B: %i W: %i \n"), scores.first, scores.second);
+
 	debugText_->setString(screenString_);
 	debugText_->setPosition(nc::theApplication().width() - debugText_->width() * 0.5f, nc::theApplication().height() - debugText_->height() * 0.5f);
 
