@@ -80,6 +80,7 @@ void MyEventHandler::onInit()
 	gameState_ = GameState(boardWidth_, Coordinate(-1, -1));
 	gameStatus_ = GameStatus(gameState_);
 	gameStatus_.ResetGame();
+	currentMoveScore_ = pair<int, int>(0, 0);
 }
 
 // The update loop
@@ -105,8 +106,7 @@ void MyEventHandler::onFrameStart()
 	}
 	screenString_.formatAppend(static_cast<const char *>("Cur_Turn: %s \n"), gameStatus_.CurrentTurn() == PlayerSide::BLACK ? "Black" : "White");
 	screenString_.formatAppend(static_cast<const char *>("Current_held_KO | (%i, %i) \n"), gameStatus_.CurrentState().lastKo_.x, gameStatus_.CurrentState().lastKo_.y);
-	auto scores = gameStatus_.CurrentState().GetPlayerCaptureScores();
-	screenString_.formatAppend(static_cast<const char *>("Captures | B: %i W: %i \n"), scores.first, scores.second);
+	screenString_.formatAppend(static_cast<const char *>("Captures | B: %i W: %i \n"), currentMoveScore_.first, currentMoveScore_.second);
 
 	debugText_->setString(screenString_);
 	debugText_->setPosition(nc::theApplication().width() - debugText_->width() * 0.5f, nc::theApplication().height() - debugText_->height() * 0.5f);
@@ -149,7 +149,7 @@ void MyEventHandler::onMouseButtonPressed(const nc::MouseEvent &event)
 		// Try applying a move if the move satisfies every other rule
 		Coordinate c = ConvertWinToGamespace(mCoordWindow_);
 		if (gameStatus_.CurrentState().IsActionValid(c, gameStatus_.CurrentTurn())) {
-			gameStatus_.PlayTurn(c);
+			currentMoveScore_ = gameStatus_.PlayTurn(c);
 		}
 	}
 }

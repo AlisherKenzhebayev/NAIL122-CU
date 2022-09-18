@@ -17,9 +17,15 @@ GameStatus::GameStatus(GameState state)
 	finished_ = false;
 }
 
-void GameStatus::PlayTurn(Coordinate c)
+/// <summary>
+/// Returns the captures for the stones, how many B / W were captured in the turn
+/// </summary>
+/// <param name="c"></param>
+/// <returns></returns>
+pair<int, int> GameStatus::PlayTurn(Coordinate c)
 {
-	// TODO: This here needs abstraction through a game model simulation
+	// TODO: This here needs abstraction through a game model simulation in MCTS
+	pair<int, int> retVal = pair<int, int>(0, 0);
 
 	// Copy the game state
 	GameState copyState = gameState_;
@@ -28,7 +34,7 @@ void GameStatus::PlayTurn(Coordinate c)
 	copyState.PlayStone(c, currentTurn_);
 
 	// Remove new captures from the board, including suicides
-	copyState.ProcessNeighborStones(c, currentTurn_);
+	retVal = copyState.ProcessNeighborStones(c, currentTurn_);
 
 	// Get the state back to the AI node
 	gameState_ = copyState;
@@ -41,7 +47,9 @@ void GameStatus::PlayTurn(Coordinate c)
 	else
 	{
 		currentTurn_ = PlayerSide::BLACK;
-	}	
+	}
+
+	return retVal;
 }
 
 void GameStatus::ResetGame()
@@ -63,8 +71,6 @@ GameState::GameState(int n, Coordinate ko)
 {
 	board_ = vector<Color>(N_ * N_, Color::E);
 	terminal_ = false;
-	p1Captures_ = 0;
-	p2Captures_ = 0;
 
 	InitNeighbors(N_);
 }
@@ -103,8 +109,8 @@ Color GameState::inverseColor(Color c)
 	}
 }
 
-bool GameState::CheckForTerminalStart() {
-	//TODO: implement here a check for a boolean, to see if the state is allowed to move onto "terminal pass" moves
+bool GameState::CheckForTerminationCondition() {
+	//TODO: implement here a check for a boolean, to see if the MCTS + state is allowed to move onto "pass" moves. WARNING: Pass moves increase branching.
 
 	return false;
 }
@@ -135,15 +141,15 @@ void GameState::PlaceSetStones(Color col, set<Coordinate> chain) {
 	{
 		board_[ConvertToArray((*i).x, (*i).y)] = col;
 	}
-
-	return;
 }
 
 /// <summary>
 /// Given a state and a "latest move" coordinate with a context of side, process all chains/stones nearby
 /// This operation also includes the removal of the suicide.
 /// </summary>
-void GameState::ProcessNeighborStones(Coordinate c, PlayerSide side) {
+pair<int, int> GameState::ProcessNeighborStones(Coordinate c, PlayerSide side) {
+	pair<int, int> retVal = pair<int, int> (0, 0);
+
 	GameState copyState = *this;
 
 	Color opponentColor = side == PlayerSide::BLACK ? Color::W : Color::B;
@@ -166,23 +172,31 @@ void GameState::ProcessNeighborStones(Coordinate c, PlayerSide side) {
 
 	for (int i = 0; i < oppStones.size(); i++)
 	{
+		Color tryCaptureC = copyState.board_[ConvertToArray(oppStones[i].x, oppStones[i].y)];
+
 		set<Coordinate> captures = copyState.TryCaptureStones(oppStones[i]);
 		opCaptured += captures.size();
+
+		AddScore(&retVal, tryCaptureC, captures.size());
 
 		if (captures.size() == 1) {
 			koCandidates.push_back(*captures.begin());
 		}
 	}
 
+	Color selfC = copyState.board_[ConvertToArray(c.x, c.y)];
 	// Check self-capture/suicide
-	copyState.SuicideCapture(c);
+	set<Coordinate> captures = copyState.TryCaptureStones(c);
+	if (captures.size() != 0)
+	{
+		AddScore(&retVal, selfC, captures.size());
+	}
 
 	// Check for a Ko situation occuring
 	copyState.lastKo_ = Coordinate(-1, -1);
 	if (opCaptured == 1)
 	{
 		Coordinate potentialKo = this->IsThisKoCandidate(c, koCandidates, side);
-		// TODO: immediate Ko checks
 		if (copyState.IsOnBoard(potentialKo))
 		{
 			// Ko coordinate is a valid one
@@ -192,18 +206,39 @@ void GameState::ProcessNeighborStones(Coordinate c, PlayerSide side) {
 	}
 
 	*this = copyState;
+
+	return retVal;
+}
+
+void GameState::AddScore(pair<int, int> *score, Color col, int size)
+{
+	if (col == Color::B)
+	{
+		(*score).first += size;
+	}
+	else if (col == Color::W)
+	{
+		(*score).second += size;
+	}
 }
 
 /// <summary>
-/// Assumes the current position of the board with a coordinate c to be already in action when evaluating. Only checks and resolves self-capture
+/// Returns a vector of all* available + filtered actions for the current state
 /// </summary>
-bool GameState::SuicideCapture(Coordinate c) {
-	set<Coordinate> captures = TryCaptureStones(c);
-	if (captures.size() != 0) {
-		return true;
+/// <param name="side"></param>
+/// <returns></returns>
+vector<Coordinate> GameState::GetAllValidActions(PlayerSide side) {
+	// TODO: Backlog - rewite the check + actions as part of the state.
+	vector<Coordinate> retVal;
+	for (auto i = 0; i < board_.size(); i++)
+	{
+		Coordinate c = ConvertToCoordinate(i, N_);
+		if (IsActionValid(c, side)) {
+			retVal.push_back(c);
+		}
 	}
 
-	return false;
+	return retVal;
 }
 
 /// <summary>
@@ -211,15 +246,6 @@ bool GameState::SuicideCapture(Coordinate c) {
 /// </summary>
 void GameState::PlayStone(Coordinate c, PlayerSide side)
 {
-	GameState retVal;
-
-	//TODO: WRONG! - This needs to be in simulation code. The rule itself are in a separate methods
-	// Add all the rules here, etc.
-	// with checks, generating next section of the board at once
-	// Q: Do I need to recalculate the score of players each generation?
-	//TODO: Add suicide rule implementation
-	//TODO: Add ko rule implementation (repeat not allowed)
-
 	if (side == PlayerSide::BLACK)
 		board_[ConvertToArray(c.x, c.y)] = Color::B;
 	else 

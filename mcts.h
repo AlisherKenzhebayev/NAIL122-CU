@@ -83,15 +83,12 @@ public:
 	bool IsOnBoard(Coordinate c);
 	ChainReached FindFloodFill(Coordinate c);
 	vector<Coordinate> GetValidNeighbors(Coordinate c);
-	void ProcessNeighborStones(Coordinate c, PlayerSide side);
+	pair <int, int> ProcessNeighborStones(Coordinate c, PlayerSide side);
 	set<Coordinate> TryCaptureStones(Coordinate c);
 	void PlaceSetStones(Color col, set<Coordinate> chain);
-	bool SuicideCapture(Coordinate c);
-	bool CheckForTerminalStart();	// Used in MCTS to define "early stopping" conditions + enables skipping in MCTS
-
-	pair<int, int> GetPlayerCaptureScores() {
-		return pair<int, int>(p1Captures_, p2Captures_);
-	}
+	void AddScore(pair<int, int> *score, Color col, int size);
+	bool CheckForTerminationCondition();	// Used in MCTS to define "early stopping" conditions + enables skipping in MCTS
+	vector<Coordinate> GetAllValidActions(PlayerSide side);
 
 	std::vector<Color> GetBoardState()
 	{
@@ -113,9 +110,7 @@ public:
 	{
 		N_ = copy.N_;
 		terminal_ = copy.terminal_;
-		p1Captures_ = copy.p1Captures_;
-		p2Captures_ = copy.p2Captures_;
-
+		
 		// Ensuring a copy, not a reference
 		board_ = vector<Color>();
 		board_ = copy.board_;
@@ -156,7 +151,6 @@ public:
   private:
 	int N_;
 	bool terminal_;
-	int p1Captures_, p2Captures_;				// Used to track the number of captured stones. P1 = Black, P2 = Whites
 	vector<Color> board_;
 	vector<vector<Coordinate>> neighbors_;	// Responsible for caching the neighbors operation only.
 
@@ -186,7 +180,7 @@ class GameStatus
 	GameStatus();
 	GameStatus(GameState state);
 
-	void GameStatus::PlayTurn(Coordinate c);
+	pair<int, int> GameStatus::PlayTurn(Coordinate c);
 	void ResetGame();
 
 	PlayerSide CurrentTurn() {

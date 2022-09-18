@@ -29,6 +29,7 @@ class MyEventHandler :
   private:
 	GameState gameState_;
 	GameStatus gameStatus_;			// Tracks the flow of the game
+	pair<int, int> currentMoveScore_;
 	
 	nctl::UniquePtr<nc::SceneNode> dummy_;
 
