@@ -1,7 +1,7 @@
 #ifndef CLASS_MYEVENTHANDLER
 #define CLASS_MYEVENTHANDLER
 
-#include "mcts.h"
+#include "game.h"
 #include "GridPool.h"
 #include <ncine/IAppEventHandler.h>
 #include <ncine/IInputEventHandler.h>

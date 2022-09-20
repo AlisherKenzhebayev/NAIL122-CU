@@ -1,206 +1,67 @@
 #ifndef MCTS_H
 #define MCTS_H
 
-#include <queue>
-#include <set>
+#include "state.h"
 #include <vector>
-#include <stdio.h>
-#include <iostream>
+#include <queue>
+#include <iomanip>
+
+#define STARTING_NUMBER_OF_CHILDREN 32   // expected number so that we can preallocate this many pointers
 
 using namespace std;
 
-// 1. Write a game functionality
-// 2. Expand to a MCTS model pipeline
-
-class Coordinate
-{
-	public:
-	Coordinate(int c1, int c2) {
-		x = c1;
-		y = c2;
-	}
-
-	int x;
-	int y;
-
-	bool operator<(const Coordinate &rhs) const noexcept
-	{
-		if (this->x == rhs.x) {
-			return this->y < rhs.y;
-		}
-		else
-		{
-			return this->x < rhs.x;
-		}
-	}
-	
-	bool operator==(const Coordinate &rhs) const noexcept
-	{
-		if (this->x == rhs.x && this->y == rhs.y)
-		{
-			return true;
-		}
-		return false;
-	}
-};
-
-enum class PlayerSide
-{
-	BLACK = 0,
-	WHITE = 1,
-};
-
-enum class Color
-{
-	E = 0,
-	W = 1,
-	B = 2,
-	Size_ = 3,
-};
-
-struct ChainReached
-{
-	set<Coordinate> Chain;
-	set<Coordinate> Reached;
-};
-
-class GameState
-{
+class MCTS_node {
+    bool terminal;
+    unsigned int size;
+    unsigned int number_of_simulations;
+    double score;                       // e.g. number of wins (could be int but double is more general if we use evaluation functions)
+    MCTS_state *state;                  // current state
+    const MCTS_move *move;              // move to get here from parent node's state
+    vector<MCTS_node *> *children;
+    MCTS_node *parent;
+    queue<MCTS_move *> *untried_actions;
+    void backpropagate(double w, int n);
 public:
-	GameState();
-	GameState(int n, Coordinate ko);
-
-	int ConvertToArray(int x, int y);
-	static Coordinate ConvertToCoordinate(int i, int N_);
-	Color inverseColor(Color c);
-	void PlayStone(Coordinate c, PlayerSide side);
-	void ResetBoard();
-	bool IsActionValid(Coordinate c, PlayerSide side);
-	bool IsOccupiedCell(Coordinate c);
-	bool IsKoRepeated(Coordinate c);
-	bool IsSuicide(Coordinate c, PlayerSide side);
-	Coordinate IsThisKoCandidate(Coordinate c, vector<Coordinate> candidates, PlayerSide side);
-	bool IsOnBoard(Coordinate c);
-	ChainReached FindFloodFill(Coordinate c);
-	vector<Coordinate> GetValidNeighbors(Coordinate c);
-	pair <int, int> ProcessNeighborStones(Coordinate c, PlayerSide side);
-	set<Coordinate> TryCaptureStones(Coordinate c);
-	void PlaceSetStones(Color col, set<Coordinate> chain);
-	void AddScore(pair<int, int> *score, Color col, int size);
-	bool CheckForTerminationCondition(PlayerSide side, int k);	// Used in MCTS to define "early stopping" conditions + enables skipping in MCTS
-	vector<Coordinate> GetAllValidActions(PlayerSide side);
-	pair<int, int> ScoreCurrentStateFinal();
-
-	std::vector<Color> GetBoardState()
-	{
-		std::cout << *this << "\n";
-	
-		return board_;
-	}
-
-	bool IsTerminal() {
-		return terminal_;
-	}
-
-	void GameTerminalStage(bool set)
-	{
-		terminal_ = set;
-	}
-	
-	GameState &operator=(GameState const &copy)
-	{
-		N_ = copy.N_;
-		terminal_ = copy.terminal_;
-		
-		// Ensuring a copy, not a reference
-		board_ = vector<Color>();
-		board_ = copy.board_;
-
-		// This copy is ok, as it only carries over the chached neighbors positions
-		neighbors_ = copy.neighbors_;
-		lastKo_ = copy.lastKo_;
-
-		return *this;
-	}
-
-	Coordinate lastKo_;
-
-	friend ostream &operator<<(std::ostream &s, const GameState &state)
-	{
-		string out = "";
-
-		for (int i = 0; i < state.board_.size(); i++) {
-			if (i % state.N_ == 0 && i != 0) {
-				out += "\n";
-			}
-
-			if (state.board_[i] == Color::B) {
-				out += "X";
-			}
-			else if (state.board_[i] == Color::W)
-			{
-				out += "O";
-			}
-			else
-			{
-				out += "_";
-			}
-		}
-		return s << out;
-	}
-
-  private:
-	int N_;
-	bool terminal_;
-	vector<Color> board_;
-	vector<vector<Coordinate>> neighbors_;	// Responsible for caching the neighbors operation only.
-
-	void InitNeighbors(int n)
-	{
-		if (neighbors_.size() != 0) {
-			return;
-		}
-
-		for (int i = 0; i < N_ * N_; i++)
-		{
-			neighbors_.push_back(GetValidNeighbors(ConvertToCoordinate(i, N_)));
-		}
-	}
-
-	//unsigned int numberOfSimulations;
-	//queue<GameMove *> *untriedActions;
+    MCTS_node(MCTS_node *parent, MCTS_state *state, const MCTS_move *move);
+    ~MCTS_node();
+    bool is_fully_expanded() const;
+    bool is_terminal() const;
+    const MCTS_move *get_move() const;
+    unsigned int get_size() const;
+    void expand();
+    void rollout();
+    MCTS_node *select_best_child(double c) const;
+    MCTS_node *advance_tree(const MCTS_move *m);
+    const MCTS_state *get_current_state() const;
+    void print_stats() const;
+    double calculate_winrate(bool player1turn) const;
 };
 
-/// <summary>
-/// Supposed to keep track of current turns, current GameState, is the game over or not
-/// TODO: Write addtional / turn *this into a MCTS 
-/// </summary>
-class GameStatus
-{
-  public:
-	GameStatus();
-	GameStatus(GameState state);
 
-	pair<int, int> GameStatus::PlayTurn(Coordinate c);
-	void ResetGame();
 
-	PlayerSide CurrentTurn() {
-		return currentTurn_;
-	}
-
-	GameState CurrentState() {
-		return gameState_;
-	}
-
-	bool IsFinished() {
-		return finished_;
-	}
-
-  private:
-	int actionsCount_;
-	PlayerSide currentTurn_;
-	GameState gameState_;
-	bool finished_;
+class MCTS_tree {
+    MCTS_node *root;
+public:
+    MCTS_tree(MCTS_state *starting_state);
+    ~MCTS_tree();
+    MCTS_node *select(double c=1.41);        // select child node to expand according to tree policy (UCT)
+    MCTS_node *select_best_child();          // select the most promising child of the root node
+    void grow_tree(int max_iter, double max_time_in_seconds);
+    void advance_tree(const MCTS_move *move);      // if the move is applicable advance the tree, else start over
+    unsigned int get_size() const;
+    const MCTS_state *get_current_state() const;
+    void print_stats() const;
 };
 
-#endif 
+
+class MCTS_agent {                           // example of an agent based on the MCTS_tree. One can also use the tree directly.
+    MCTS_tree *tree;
+    int max_iter, max_seconds;
+public:
+    MCTS_agent(MCTS_state *starting_state, int max_iter = 100000, int max_seconds = 30);
+    ~MCTS_agent();
+    const MCTS_move *genmove(const MCTS_move *enemy_move);
+    const MCTS_state *get_current_state() const;
+    void feedback() const { tree->print_stats(); }
+};
+#endif

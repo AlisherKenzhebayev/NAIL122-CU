@@ -1,5 +1,5 @@
 #include "GridPool.h"
-#include "mcts.h"
+#include "game.h"
 
 #include <ncine/Random.h>
 #include <ncine/Application.h>

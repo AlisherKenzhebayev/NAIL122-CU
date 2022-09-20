@@ -1,5 +1,5 @@
 #include "main.h"
-#include "mcts.h"
+#include "game.h"
 
 #include <chrono>
 #include <ncine/Application.h>
@@ -119,9 +119,9 @@ void MyEventHandler::onFrameStart()
 }
 
 bool MyEventHandler::isMoveValidBounds(int x, int y) {
-	if (x >= 0 && x <= 800)
+	if (x >= 0 && x < (int)gameWidth_)
 	{
-		if (y >= 0 && y <= 800)
+		if (y >= 0 && y < (int)gameHeight_)
 		{
 			return true;
 		}	
@@ -146,6 +146,13 @@ void MyEventHandler::onMouseMoved(const nc::MouseState &state) {
 
 void MyEventHandler::onMouseButtonPressed(const nc::MouseEvent &event)
 {
+	if (event.isRightButton()) {
+		// Generate a move using the AI*
+
+
+		return;
+	}
+
 	// Check if it is within the play area for a click
 	if (isMoveValidBounds(mCoordWindow_.x, mCoordWindow_.y)) {
 		// Try applying a move if the move satisfies every other rule

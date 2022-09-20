@@ -2,7 +2,7 @@
 #define GRID_POOL_H
 
 #include "SpritePool.h"
-#include "mcts.h"
+#include "game.h"
 
 #include <ncine/Texture.h>
 #include <ncine/TimeStamp.h>
