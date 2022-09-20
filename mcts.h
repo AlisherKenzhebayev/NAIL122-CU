@@ -87,8 +87,9 @@ public:
 	set<Coordinate> TryCaptureStones(Coordinate c);
 	void PlaceSetStones(Color col, set<Coordinate> chain);
 	void AddScore(pair<int, int> *score, Color col, int size);
-	bool CheckForTerminationCondition();	// Used in MCTS to define "early stopping" conditions + enables skipping in MCTS
+	bool CheckForTerminationCondition(PlayerSide side, int k);	// Used in MCTS to define "early stopping" conditions + enables skipping in MCTS
 	vector<Coordinate> GetAllValidActions(PlayerSide side);
+	pair<int, int> ScoreCurrentStateFinal();
 
 	std::vector<Color> GetBoardState()
 	{

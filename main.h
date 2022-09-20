@@ -30,7 +30,8 @@ class MyEventHandler :
 	GameState gameState_;
 	GameStatus gameStatus_;			// Tracks the flow of the game
 	pair<int, int> currentMoveScore_;
-	
+	pair<int, int> currentTerritoryScore_;
+
 	nctl::UniquePtr<nc::SceneNode> dummy_;
 
 	// Board draw

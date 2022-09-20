@@ -81,6 +81,7 @@ void MyEventHandler::onInit()
 	gameStatus_ = GameStatus(gameState_);
 	gameStatus_.ResetGame();
 	currentMoveScore_ = pair<int, int>(0, 0);
+	currentTerritoryScore_ = pair<int, int>(0, 0);
 }
 
 // The update loop
@@ -107,6 +108,7 @@ void MyEventHandler::onFrameStart()
 	screenString_.formatAppend(static_cast<const char *>("Cur_Turn: %s \n"), gameStatus_.CurrentTurn() == PlayerSide::BLACK ? "Black" : "White");
 	screenString_.formatAppend(static_cast<const char *>("Current_held_KO | (%i, %i) \n"), gameStatus_.CurrentState().lastKo_.x, gameStatus_.CurrentState().lastKo_.y);
 	screenString_.formatAppend(static_cast<const char *>("Captures | B: %i W: %i \n"), currentMoveScore_.first, currentMoveScore_.second);
+	screenString_.formatAppend(static_cast<const char *>("Territory | B: %i W: %i \n"), currentTerritoryScore_.first, currentTerritoryScore_.second);
 
 	debugText_->setString(screenString_);
 	debugText_->setPosition(nc::theApplication().width() - debugText_->width() * 0.5f, nc::theApplication().height() - debugText_->height() * 0.5f);
@@ -150,6 +152,7 @@ void MyEventHandler::onMouseButtonPressed(const nc::MouseEvent &event)
 		Coordinate c = ConvertWinToGamespace(mCoordWindow_);
 		if (gameStatus_.CurrentState().IsActionValid(c, gameStatus_.CurrentTurn())) {
 			currentMoveScore_ = gameStatus_.PlayTurn(c);
+			currentTerritoryScore_ = gameStatus_.CurrentState().ScoreCurrentStateFinal();
 		}
 	}
 }

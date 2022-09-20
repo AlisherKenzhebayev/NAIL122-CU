@@ -8,7 +8,6 @@ GameStatus::GameStatus()
 	finished_ = false;
 }
 
-
 GameStatus::GameStatus(GameState state)
     : gameState_(state)
 {
@@ -65,7 +64,6 @@ GameState::GameState()
 {
 }
 
-
 GameState::GameState(int n, Coordinate ko)
     : N_(n), lastKo_(ko)
 {
@@ -109,8 +107,86 @@ Color GameState::inverseColor(Color c)
 	}
 }
 
-bool GameState::CheckForTerminationCondition() {
-	//TODO: implement here a check for a boolean, to see if the MCTS + state is allowed to move onto "pass" moves. WARNING: Pass moves increase branching.
+/// <summary>
+/// Tries to evaluate the territory-only scoring based on the assumption that the current state is final
+/// </summary>
+/// <returns> Pair <int> B, W scores </returns>
+pair<int, int> GameState::ScoreCurrentStateFinal() {
+	pair<int, int> retVal = pair<int, int>(0, 0);
+	vector<bool> visited = vector<bool>(N_ * N_, false);
+
+	for (int k = 0; k < board_.size(); k++) {
+		if (visited[k])
+		{
+			// Already scored
+			continue;
+		}
+
+		if (board_[k] != Color::E) {
+			// Non-scorable space, as has stone on it
+			visited[k] = true;
+			continue;
+		}
+
+		int differentColors = 0;
+		int colors[(int)Color::Size_] = { 0 };
+		ChainReached chain = FindFloodFill(ConvertToCoordinate(k, N_));
+
+		// Filter the nummber of colors this floodfill covers, except for empty cells
+		for (auto i = chain.Reached.begin(); i != chain.Reached.end(); i++)
+		{
+			Color cell = board_[ConvertToArray((*i).x, (*i).y)];
+			if (cell == Color::E)
+			{
+				continue;
+			}
+
+			colors[(int)cell]++;
+		}	
+
+		for (auto i = 0; i < (int)Color::Size_; i++)
+		{
+			if (colors[i] > 0)
+			{
+				differentColors++;
+			}
+		}
+
+		if (differentColors == 1) {
+			// Either a B or W territory
+			if (colors[(int)Color::B] > 0) {
+				retVal.first += chain.Chain.size();
+			}
+			else
+			{
+				retVal.second += chain.Chain.size();
+			}
+		}
+		else
+		{
+			// Either
+			// NO ownership
+			// OR a DAME, two color region coverage, so not counting it
+		}
+
+		// Mark everything in the floodfill as visited
+		for (auto i = chain.Chain.begin(); i != chain.Chain.end(); i++)
+		{
+			visited[ConvertToArray((*i).x, (*i).y)] = true;
+		}
+	}
+
+	return retVal;
+}
+
+/// <summary>
+/// Processes the current state, gives out the bool result if the threshold is reached
+/// </summary>
+bool GameState::CheckForTerminationCondition(PlayerSide side, int k) {
+	if (GetAllValidActions(side).size() <= k) {
+		//TODO: implement here a check for a boolean, to see if the MCTS + state is allowed to move onto "pass" moves. WARNING: Pass moves increase branching.
+		return true;
+	}
 
 	return false;
 }
@@ -228,7 +304,7 @@ void GameState::AddScore(pair<int, int> *score, Color col, int size)
 /// <param name="side"></param>
 /// <returns></returns>
 vector<Coordinate> GameState::GetAllValidActions(PlayerSide side) {
-	// TODO: Backlog - rewite the check + actions as part of the state.
+	// TODO: Backlog - rewite the check + actions as part of the state, caching it on Constructor()
 	vector<Coordinate> retVal;
 	for (auto i = 0; i < board_.size(); i++)
 	{
@@ -257,7 +333,7 @@ void GameState::PlayStone(Coordinate c, PlayerSide side)
 /// </summary>
 bool GameState::IsActionValid(Coordinate c, PlayerSide side)
 {
-	//TODO: define what is valid game action (placement of stone)? according to the rules
+	// Defines what is valid game action (placement of stone)? according to the rules
 	// 1. The players may choose any unoccupied intersection
 	// 3. except for those forbidden by the suicide rules (see below). 
 	// 2. except for those forbidden by the ko
