@@ -1,5 +1,5 @@
-#ifndef MCTS_H
-#define MCTS_H
+#ifndef GO_H
+#define GO_H
 
 #include <queue>
 #include <set>
@@ -97,7 +97,11 @@ public:
 
 	std::vector<Color> GetBoardState()
 	{
+		//#define DDEBUG
+
+#ifdef DDEBUG
 		std::cout << *this << "\n";
+#endif // DDEBUG
 	
 		return board_;
 	}
@@ -170,9 +174,6 @@ public:
 			neighbors_.push_back(GetValidNeighbors(ConvertToCoordinate(i, N_)));
 		}
 	}
-
-	//unsigned int numberOfSimulations;
-	//queue<GameMove *> *untriedActions;
 };
 
 /// <summary>

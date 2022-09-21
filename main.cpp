@@ -11,6 +11,10 @@
 #include <ncine/IGfxDevice.h>
 #include <ncine/FileSystem.h>
 #include <ncine/DrawableNode.h>
+#include <ncine/Timer.h>
+
+#define MAXITER 10000
+#define MAXSECONDS 15
 
 const char *FontTextureFile = "DroidSans32_256.png";
 const int boardWidth_ = 9;
@@ -82,6 +86,8 @@ void MyEventHandler::onInit()
 	gameStatus_.ResetGame();
 	currentMoveScore_ = pair<int, int>(0, 0);
 	currentTerritoryScore_ = pair<int, int>(0, 0);
+
+	gameTree_ = new MCTS_tree(new Go_state());
 }
 
 // The update loop
@@ -109,7 +115,14 @@ void MyEventHandler::onFrameStart()
 	screenString_.formatAppend(static_cast<const char *>("Current_held_KO | (%i, %i) \n"), gameStatus_.CurrentState().lastKo_.x, gameStatus_.CurrentState().lastKo_.y);
 	screenString_.formatAppend(static_cast<const char *>("Captures | B: %i W: %i \n"), currentMoveScore_.first, currentMoveScore_.second);
 	screenString_.formatAppend(static_cast<const char *>("Territory | B: %i W: %i \n"), currentTerritoryScore_.first, currentTerritoryScore_.second);
-
+	if (lastAiMove_)
+	{
+		screenString_.formatAppend(static_cast<const char *>("MOVE - AI \n"));
+	}
+	else
+	{
+		screenString_.formatAppend(static_cast<const char *>("MOVE - Player \n"));
+	}
 	debugText_->setString(screenString_);
 	debugText_->setPosition(nc::theApplication().width() - debugText_->width() * 0.5f, nc::theApplication().height() - debugText_->height() * 0.5f);
 
@@ -148,19 +161,64 @@ void MyEventHandler::onMouseButtonPressed(const nc::MouseEvent &event)
 {
 	if (event.isRightButton()) {
 		// Generate a move using the AI*
+		lastAiMove_ = true;
 
+		// grow tree by thinking ahead and sampling monte carlo rollouts
+		gameTree_->grow_tree(MAXITER, MAXSECONDS);
+		gameTree_->print_stats(); // debug
+
+		// select best child node at root level
+		MCTS_node *best_child = gameTree_->select_best_child();
+		if (best_child == NULL)
+		{
+			cerr << "Warning: Could not find best child. Tree has no children? Possible terminal node" << endl << endl;
+		}
+		const Go_move *best_move = (const Go_move *)best_child->get_move();
+
+		// advance the tree so the selected child node is now the root
+		gameTree_->advance_tree(best_move);
+
+		// Play the move in the actual game, so reference changes
+		currentMoveScore_ = gameStatus_.PlayTurn(best_move->c_);
+		currentTerritoryScore_ = gameStatus_.CurrentState().ScoreCurrentStateFinal();
+
+		// TODO: If the generated move is a pass, handle that
+
+		cout << "C_AI" << endl;
+		gameTree_->get_current_state()->print();
+		cout << endl << "C_G" << endl << gameStatus_.CurrentState() << endl;
 
 		return;
 	}
 
-	// Check if it is within the play area for a click
-	if (isMoveValidBounds(mCoordWindow_.x, mCoordWindow_.y)) {
-		// Try applying a move if the move satisfies every other rule
-		Coordinate c = ConvertWinToGamespace(mCoordWindow_);
-		if (gameStatus_.CurrentState().IsActionValid(c, gameStatus_.CurrentTurn())) {
-			currentMoveScore_ = gameStatus_.PlayTurn(c);
-			currentTerritoryScore_ = gameStatus_.CurrentState().ScoreCurrentStateFinal();
+	if (event.isMiddleButton())
+	{
+		// TODO: allow + handle passes in game itself
+		// Defines a player pass
+		passCount_++;
+	}
+
+	if (event.isLeftButton())
+	{
+		// Player move
+		lastAiMove_ = false;
+		// Check if it is within the play area for a click
+		if (isMoveValidBounds(mCoordWindow_.x, mCoordWindow_.y))
+		{
+			// Try applying a move if the move satisfies every other rule
+			Coordinate c = ConvertWinToGamespace(mCoordWindow_);
+			if (gameStatus_.CurrentState().IsActionValid(c, gameStatus_.CurrentTurn()))
+			{
+				// Play the same move in AI tree
+				Go_move move = Go_move(c, gameStatus_.CurrentTurn());
+				gameTree_->advance_tree(&move);
+
+				// Play the move in the actual game, so reference changes
+				currentMoveScore_ = gameStatus_.PlayTurn(c);
+				currentTerritoryScore_ = gameStatus_.CurrentState().ScoreCurrentStateFinal();
+			}
 		}
+		return;
 	}
 }
 
