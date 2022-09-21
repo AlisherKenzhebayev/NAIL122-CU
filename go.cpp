@@ -12,16 +12,15 @@ const int SKIP_THRES = 10; // Allows skips from this point
 default_random_engine Go_state::generator = default_random_engine(time(NULL));
 
 Go_state::Go_state()
-    : state_(NULL), turn_(PlayerSide::BLACK), moveCounter_(0), skipCounter_(0), colorCaptures_(pair<int, int>(0, 0))
+    : state_(new GameState()), turn_(PlayerSide::BLACK), moveCounter_(0), skipCounter_(0), colorCaptures_(pair<int, int>(0, 0))
 {
-	state_ = new GameState();
 }
 
 Go_state::Go_state(const Go_state &other)
-    : state_(NULL), turn_(other.turn_), moveCounter_(other.moveCounter_), skipCounter_(other.skipCounter_), colorCaptures_(other.colorCaptures_)
+    : state_(other.state_), turn_(other.turn_), moveCounter_(other.moveCounter_), skipCounter_(other.skipCounter_), colorCaptures_(other.colorCaptures_)
 {
-	GameState t = *other.state_;
-	state_ = &t;
+	//GameState t = *(other.state_);
+	//state_ = &t;
 }
 
 Go_state::~Go_state()

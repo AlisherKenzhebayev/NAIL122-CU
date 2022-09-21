@@ -31,8 +31,10 @@ class MyEventHandler :
   private:
 	GameState gameState_;
 	GameStatus gameStatus_;			// Tracks the flow of the game
-
 	MCTS_tree *gameTree_;
+
+	bool lastAiMove_;
+	int passCount_;
 
 	pair<int, int> currentMoveScore_;
 	pair<int, int> currentTerritoryScore_;

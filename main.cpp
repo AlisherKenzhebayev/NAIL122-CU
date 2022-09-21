@@ -11,6 +11,10 @@
 #include <ncine/IGfxDevice.h>
 #include <ncine/FileSystem.h>
 #include <ncine/DrawableNode.h>
+#include <ncine/Timer.h>
+
+#define MAXITER 20000
+#define MAXSECONDS 15
 
 const char *FontTextureFile = "DroidSans32_256.png";
 const int boardWidth_ = 9;
@@ -111,7 +115,14 @@ void MyEventHandler::onFrameStart()
 	screenString_.formatAppend(static_cast<const char *>("Current_held_KO | (%i, %i) \n"), gameStatus_.CurrentState().lastKo_.x, gameStatus_.CurrentState().lastKo_.y);
 	screenString_.formatAppend(static_cast<const char *>("Captures | B: %i W: %i \n"), currentMoveScore_.first, currentMoveScore_.second);
 	screenString_.formatAppend(static_cast<const char *>("Territory | B: %i W: %i \n"), currentTerritoryScore_.first, currentTerritoryScore_.second);
-
+	if (lastAiMove_)
+	{
+		screenString_.formatAppend(static_cast<const char *>("MOVE - AI \n"));
+	}
+	else
+	{
+		screenString_.formatAppend(static_cast<const char *>("MOVE - Player \n"));
+	}
 	debugText_->setString(screenString_);
 	debugText_->setPosition(nc::theApplication().width() - debugText_->width() * 0.5f, nc::theApplication().height() - debugText_->height() * 0.5f);
 
@@ -150,19 +161,42 @@ void MyEventHandler::onMouseButtonPressed(const nc::MouseEvent &event)
 {
 	if (event.isRightButton()) {
 		// Generate a move using the AI*
+		lastAiMove_ = true;
 
+
+		// TODO: If the generated move is a pass
 
 		return;
 	}
 
-	// Check if it is within the play area for a click
-	if (isMoveValidBounds(mCoordWindow_.x, mCoordWindow_.y)) {
-		// Try applying a move if the move satisfies every other rule
-		Coordinate c = ConvertWinToGamespace(mCoordWindow_);
-		if (gameStatus_.CurrentState().IsActionValid(c, gameStatus_.CurrentTurn())) {
-			currentMoveScore_ = gameStatus_.PlayTurn(c);
-			currentTerritoryScore_ = gameStatus_.CurrentState().ScoreCurrentStateFinal();
+	if (event.isMiddleButton())
+	{
+		// TODO: allow + handle passes in game itself
+		// Defines a player pass
+		passCount_++;
+	}
+
+	if (event.isLeftButton())
+	{
+		// Player move
+		lastAiMove_ = false;
+		// Check if it is within the play area for a click
+		if (isMoveValidBounds(mCoordWindow_.x, mCoordWindow_.y))
+		{
+			// Try applying a move if the move satisfies every other rule
+			Coordinate c = ConvertWinToGamespace(mCoordWindow_);
+			if (gameStatus_.CurrentState().IsActionValid(c, gameStatus_.CurrentTurn()))
+			{
+				// Play the same move in AI tree
+				Go_move move = Go_move(c, gameStatus_.CurrentTurn());
+				gameTree_->advance_tree(&move);
+
+				// Play the move in the actual game, so reference changes
+				currentMoveScore_ = gameStatus_.PlayTurn(c);
+				currentTerritoryScore_ = gameStatus_.CurrentState().ScoreCurrentStateFinal();
+			}
 		}
+		return;
 	}
 }
 
