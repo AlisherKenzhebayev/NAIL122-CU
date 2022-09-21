@@ -14,7 +14,7 @@ default_random_engine Go_state::generator = default_random_engine(time(NULL));
 Go_state::Go_state()
     : state_(NULL), turn_(PlayerSide::BLACK), moveCounter_(0), skipCounter_(0), colorCaptures_(pair<int, int>(0, 0))
 {
-	state_ = &GameState();
+	state_ = new GameState();
 }
 
 Go_state::Go_state(const Go_state &other)

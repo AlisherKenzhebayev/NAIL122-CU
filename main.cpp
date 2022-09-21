@@ -82,6 +82,8 @@ void MyEventHandler::onInit()
 	gameStatus_.ResetGame();
 	currentMoveScore_ = pair<int, int>(0, 0);
 	currentTerritoryScore_ = pair<int, int>(0, 0);
+
+	gameTree_ = new MCTS_tree(new Go_state());
 }
 
 // The update loop

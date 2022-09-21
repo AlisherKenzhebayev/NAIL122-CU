@@ -2,6 +2,8 @@
 #define CLASS_MYEVENTHANDLER
 
 #include "game.h"
+#include "mcts.h"
+#include "go.h"
 #include "GridPool.h"
 #include <ncine/IAppEventHandler.h>
 #include <ncine/IInputEventHandler.h>
@@ -29,6 +31,9 @@ class MyEventHandler :
   private:
 	GameState gameState_;
 	GameStatus gameStatus_;			// Tracks the flow of the game
+
+	MCTS_tree *gameTree_;
+
 	pair<int, int> currentMoveScore_;
 	pair<int, int> currentTerritoryScore_;
 

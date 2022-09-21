@@ -1,5 +1,5 @@
-#ifndef MCTS_QUORIDOR_H
-#define MCTS_QUORIDOR_H
+#ifndef MCTS_GO_H
+#define MCTS_GO_H
 
 #include "state.h"
 #include "game.h"
