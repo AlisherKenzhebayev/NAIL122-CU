@@ -9,10 +9,16 @@
 
 struct Go_move : public MCTS_move
 {
+	bool skip_;
 	Coordinate c_;
 	PlayerSide player_;
+
 	Go_move(Coordinate c, PlayerSide p)
-	    : c_(c), player_(p)
+	    : c_(c), player_(p), skip_(false)
+	{}
+
+	Go_move(bool toSkip, PlayerSide p)
+	    : c_(Coordinate(-1, -1)), player_(p), skip_(toSkip)
 	{}
 
 	bool operator==(const MCTS_move &other) const override
@@ -24,6 +30,10 @@ struct Go_move : public MCTS_move
 	string sprint() const override
 	{
 		string playerstr = (player_ == PlayerSide::WHITE) ? "White" : "Black";
+		if (skip_) {
+			return playerstr + " skips move";
+		}
+
 		return playerstr + " plays stone at - (" + to_string(c_.x) + ", " + to_string(c_.y);
 	}
 };
@@ -38,6 +48,9 @@ class Go_state : public MCTS_state
 	int skipCounter_;
 	// Moves played
 	unsigned int moveCounter_;
+	// Score tracker for captures (B,W). Num = stones of that color that were captured.
+	pair<int,int> colorCaptures_;
+
 	// randomness for rollouts
 	static default_random_engine generator;
 
@@ -55,11 +68,12 @@ class Go_state : public MCTS_state
 
 	PlayerSide whose_turn() const { return turn_; }
 	unsigned int get_number_of_turns() const { return moveCounter_; }
+	vector<Coordinate> *all_actions() const;
+	bool skip_enabled() const;
 
 	char check_winner() const;
 
 	bool legal_move(const Go_move *move);
-	bool move_skip_once();
 	bool play_move(const Go_move *move);
 	
 	/** Overrides: **/

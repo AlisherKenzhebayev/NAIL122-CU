@@ -170,9 +170,6 @@ public:
 			neighbors_.push_back(GetValidNeighbors(ConvertToCoordinate(i, N_)));
 		}
 	}
-
-	//unsigned int numberOfSimulations;
-	//queue<GameMove *> *untriedActions;
 };
 
 /// <summary>
