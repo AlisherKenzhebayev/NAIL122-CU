@@ -68,7 +68,7 @@ class Go_state : public MCTS_state
 
 	PlayerSide whose_turn() const { return turn_; }
 	unsigned int get_number_of_turns() const { return moveCounter_; }
-	vector<Coordinate> *all_actions() const;
+	vector<Coordinate> all_actions() const;
 	bool skip_enabled() const;
 
 	char check_winner() const;

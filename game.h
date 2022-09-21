@@ -97,7 +97,11 @@ public:
 
 	std::vector<Color> GetBoardState()
 	{
+		//#define DDEBUG
+
+#ifdef DDEBUG
 		std::cout << *this << "\n";
+#endif // DDEBUG
 	
 		return board_;
 	}

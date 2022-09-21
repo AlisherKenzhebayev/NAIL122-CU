@@ -13,7 +13,7 @@
 #include <ncine/DrawableNode.h>
 #include <ncine/Timer.h>
 
-#define MAXITER 20000
+#define MAXITER 10000
 #define MAXSECONDS 15
 
 const char *FontTextureFile = "DroidSans32_256.png";
@@ -163,8 +163,30 @@ void MyEventHandler::onMouseButtonPressed(const nc::MouseEvent &event)
 		// Generate a move using the AI*
 		lastAiMove_ = true;
 
+		// grow tree by thinking ahead and sampling monte carlo rollouts
+		gameTree_->grow_tree(MAXITER, MAXSECONDS);
+		gameTree_->print_stats(); // debug
 
-		// TODO: If the generated move is a pass
+		// select best child node at root level
+		MCTS_node *best_child = gameTree_->select_best_child();
+		if (best_child == NULL)
+		{
+			cerr << "Warning: Could not find best child. Tree has no children? Possible terminal node" << endl << endl;
+		}
+		const Go_move *best_move = (const Go_move *)best_child->get_move();
+
+		// advance the tree so the selected child node is now the root
+		gameTree_->advance_tree(best_move);
+
+		// Play the move in the actual game, so reference changes
+		currentMoveScore_ = gameStatus_.PlayTurn(best_move->c_);
+		currentTerritoryScore_ = gameStatus_.CurrentState().ScoreCurrentStateFinal();
+
+		// TODO: If the generated move is a pass, handle that
+
+		cout << "C_AI" << endl;
+		gameTree_->get_current_state()->print();
+		cout << endl << "C_G" << endl << gameStatus_.CurrentState() << endl;
 
 		return;
 	}

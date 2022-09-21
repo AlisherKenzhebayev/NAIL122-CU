@@ -138,13 +138,15 @@ MCTS_node *MCTS_node::advance_tree(const MCTS_move *m) {
 
 
 /*** MCTS TREE ***/
-MCTS_node *MCTS_tree::select(double c) {
+MCTS_node *MCTS_tree::select(double c)
+{
     MCTS_node *node = root;
     while (!node->is_terminal()) {
-        if (!node->is_fully_expanded()) {
+		
+		if (!node->is_fully_expanded()) {
             return node;
         } else {
-            node = node->select_best_child(c);
+			node = node->select_best_child(c);
         }
     }
     return node;
